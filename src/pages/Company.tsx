@@ -1,0 +1,209 @@
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, MapPin, DollarSign, Globe, CheckCircle2 } from 'lucide-react';
+import { toast } from 'sonner';
+
+interface Company {
+  id: string;
+  name: string;
+  description: string;
+  logo_url: string;
+  website: string;
+  location: string;
+}
+
+interface Job {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  salary_min: number;
+  salary_max: number;
+  employment_type: string;
+}
+
+const Company = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [company, setCompany] = useState<Company | null>(null);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [applications, setApplications] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (id) {
+      fetchCompanyData();
+    }
+  }, [id]);
+
+  const fetchCompanyData = async () => {
+    try {
+      const [companyResult, jobsResult, applicationsResult] = await Promise.all([
+        supabase.from('companies').select('*').eq('id', id).single(),
+        supabase.from('jobs').select('*').eq('company_id', id).eq('is_active', true),
+        user
+          ? supabase
+              .from('applications')
+              .select('job_id')
+              .eq('user_id', user.id)
+          : Promise.resolve({ data: null }),
+      ]);
+
+      if (companyResult.error) throw companyResult.error;
+      if (jobsResult.error) throw jobsResult.error;
+
+      setCompany(companyResult.data);
+      setJobs(jobsResult.data || []);
+      
+      if (applicationsResult.data) {
+        setApplications(new Set(applicationsResult.data.map((a) => a.job_id)));
+      }
+    } catch (error: any) {
+      toast.error('Failed to load company data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!company) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-xl text-muted-foreground">Company not found</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      <header className="border-b bg-card/50 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4">
+          <Button variant="ghost" onClick={() => navigate('/jobs')}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Jobs
+          </Button>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-4 py-12">
+        <div className="mx-auto max-w-4xl space-y-8">
+          <Card>
+            <CardHeader>
+              <div className="flex items-start gap-6">
+                {company.logo_url && (
+                  <img
+                    src={company.logo_url}
+                    alt={company.name}
+                    className="h-20 w-20 rounded-lg object-cover"
+                  />
+                )}
+                <div className="flex-1">
+                  <CardTitle className="mb-2 text-3xl">{company.name}</CardTitle>
+                  <div className="flex flex-wrap gap-4 text-muted-foreground">
+                    {company.location && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-4 w-4" />
+                        {company.location}
+                      </span>
+                    )}
+                    {company.website && (
+                      <a
+                        href={company.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 hover:text-primary"
+                      >
+                        <Globe className="h-4 w-4" />
+                        Website
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <h3 className="mb-2 text-lg font-semibold">About</h3>
+              <p className="text-muted-foreground">{company.description}</p>
+            </CardContent>
+          </Card>
+
+          <div>
+            <h2 className="mb-4 text-2xl font-bold">
+              Open Positions ({jobs.length})
+            </h2>
+            <div className="space-y-4">
+              {jobs.map((job) => (
+                <Card
+                  key={job.id}
+                  className="cursor-pointer transition-all hover:shadow-lg"
+                  onClick={() => navigate(`/jobs/${job.id}`)}
+                >
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="mb-2">{job.title}</CardTitle>
+                        <CardDescription className="flex items-center gap-4">
+                          {job.location && (
+                            <span className="flex items-center gap-1">
+                              <MapPin className="h-4 w-4" />
+                              {job.location}
+                            </span>
+                          )}
+                        </CardDescription>
+                      </div>
+                      <div className="flex gap-2">
+                        {job.employment_type && (
+                          <Badge variant="secondary">{job.employment_type}</Badge>
+                        )}
+                        {applications.has(job.id) && (
+                          <Badge className="bg-primary/10 text-primary">
+                            <CheckCircle2 className="mr-1 h-3 w-3" />
+                            Applied
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="mb-4 text-muted-foreground line-clamp-2">
+                      {job.description}
+                    </p>
+                    {job.salary_min && job.salary_max && (
+                      <div className="flex items-center gap-2 text-primary">
+                        <DollarSign className="h-4 w-4" />
+                        <span className="font-semibold">
+                          ${job.salary_min.toLocaleString()} - $
+                          {job.salary_max.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+              {jobs.length === 0 && (
+                <p className="py-8 text-center text-muted-foreground">
+                  No open positions at the moment
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default Company;

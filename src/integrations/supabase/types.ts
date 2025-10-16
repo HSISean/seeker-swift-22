@@ -143,6 +143,7 @@ export type Database = {
           full_name: string | null
           id: string
           job_title: string | null
+          location: string | null
           resume_url: string | null
           salary_max: number | null
           salary_min: number | null
@@ -154,6 +155,7 @@ export type Database = {
           full_name?: string | null
           id: string
           job_title?: string | null
+          location?: string | null
           resume_url?: string | null
           salary_max?: number | null
           salary_min?: number | null
@@ -165,6 +167,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           job_title?: string | null
+          location?: string | null
           resume_url?: string | null
           salary_max?: number | null
           salary_min?: number | null

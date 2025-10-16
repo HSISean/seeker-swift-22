@@ -13,7 +13,7 @@ const Splash = () => {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent">
               <Briefcase className="h-6 w-6 text-white" />
             </div>
-            <span className="text-xl font-bold">JobFinder</span>
+            <span className="text-xl font-bold">Work For Me</span>
           </div>
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => navigate('/signin')}>

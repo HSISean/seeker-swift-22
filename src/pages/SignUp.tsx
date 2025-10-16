@@ -14,6 +14,7 @@ const SignUp = () => {
     password: '',
     fullName: '',
     jobTitle: '',
+    location: '',
     salaryMin: '',
     salaryMax: '',
   });
@@ -45,6 +46,7 @@ const SignUp = () => {
           .from('profiles')
           .update({
             job_title: formData.jobTitle,
+            location: formData.location,
             salary_min: parseInt(formData.salaryMin) || null,
             salary_max: parseInt(formData.salaryMax) || null,
           })
@@ -110,6 +112,16 @@ const SignUp = () => {
                 placeholder="e.g., Software Engineer"
                 value={formData.jobTitle}
                 onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <Input
+                id="location"
+                placeholder="e.g., New York, NY"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 required
               />
             </div>

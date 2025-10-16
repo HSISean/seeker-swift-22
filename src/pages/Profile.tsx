@@ -14,6 +14,7 @@ interface Profile {
   email: string;
   full_name: string;
   job_title: string;
+  location: string;
   salary_min: number;
   salary_max: number;
   resume_url: string;
@@ -90,6 +91,7 @@ const Profile = () => {
         .update({
           full_name: profile.full_name,
           job_title: profile.job_title,
+          location: profile.location,
           salary_min: profile.salary_min,
           salary_max: profile.salary_max,
         })
@@ -189,6 +191,16 @@ const Profile = () => {
                     value={profile?.job_title || ''}
                     onChange={(e) =>
                       setProfile({ ...profile!, job_title: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Input
+                    id="location"
+                    value={profile?.location || ''}
+                    onChange={(e) =>
+                      setProfile({ ...profile!, location: e.target.value })
                     }
                   />
                 </div>

@@ -16,12 +16,12 @@ import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const App = () => (
-  <TooltipProvider>
-    <Toaster />
-    <Sonner />
-    <BrowserRouter>
+  <BrowserRouter>
+    <TooltipProvider>
       <AuthProvider>
-          <Routes>
+        <Toaster />
+        <Sonner />
+        <Routes>
             <Route path="/" element={<Splash />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
@@ -46,10 +46,10 @@ const App = () => (
               }
             />
             <Route path="*" element={<NotFound />} />
-        </Routes>
+          </Routes>
       </AuthProvider>
-    </BrowserRouter>
-  </TooltipProvider>
+    </TooltipProvider>
+  </BrowserRouter>
 );
 
 export default App;

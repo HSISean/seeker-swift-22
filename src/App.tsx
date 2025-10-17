@@ -16,8 +16,8 @@ import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const App = () => (
-  <BrowserRouter>
-    <TooltipProvider>
+  <TooltipProvider>
+    <BrowserRouter>
       <AuthProvider>
         <Toaster />
         <Sonner />
@@ -45,11 +45,11 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </AuthProvider>
-    </TooltipProvider>
-  </BrowserRouter>
+    </BrowserRouter>
+  </TooltipProvider>
 );
 
 export default App;

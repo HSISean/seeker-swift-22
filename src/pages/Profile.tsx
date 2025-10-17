@@ -9,6 +9,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Upload, FileText, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+interface SubscriptionType {
+  interest_level: string | null;
+  resume_subscription: string | null;
+  job_subscription: string | null;
+  cover_letter_subscription: string | null;
+}
+
 interface Profile {
   id: string;
   email: string;
@@ -18,6 +25,7 @@ interface Profile {
   salary_min: number;
   salary_max: number;
   resume_url: string;
+  subscription_type?: SubscriptionType | null;
 }
 
 interface Application {
@@ -52,7 +60,15 @@ const Profile = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          *,
+          subscription_type:subscriptions (
+            interest_level,
+            resume_subscription,
+            job_subscription,
+            cover_letter_subscription
+          )
+        `)
         .eq('id', user?.id)
         .single();
 
@@ -238,6 +254,54 @@ const Profile = () => {
                   {saving ? 'Saving...' : 'Save Changes'}
                 </Button>
               </form>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Subscription Plan</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {profile?.subscription_type ? (
+                <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-lg border p-4">
+                      <Label className="text-sm text-muted-foreground">Interest Level</Label>
+                      <p className="mt-1 font-medium capitalize">
+                        {profile.subscription_type.interest_level?.replace(/_/g, ' ') || 'Not set'}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border p-4">
+                      <Label className="text-sm text-muted-foreground">Resume Subscription</Label>
+                      <p className="mt-1 font-medium">
+                        {profile.subscription_type.resume_subscription 
+                          ? `$${profile.subscription_type.resume_subscription}`
+                          : 'Not set'}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border p-4">
+                      <Label className="text-sm text-muted-foreground">Job Subscription</Label>
+                      <p className="mt-1 font-medium">
+                        {profile.subscription_type.job_subscription 
+                          ? `$${profile.subscription_type.job_subscription}`
+                          : 'Not set'}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border p-4">
+                      <Label className="text-sm text-muted-foreground">Cover Letter Subscription</Label>
+                      <p className="mt-1 font-medium">
+                        {profile.subscription_type.cover_letter_subscription 
+                          ? `$${profile.subscription_type.cover_letter_subscription}`
+                          : 'Not set'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="py-4 text-center text-muted-foreground">
+                  No subscription plan selected
+                </p>
+              )}
             </CardContent>
           </Card>
 

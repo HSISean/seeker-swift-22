@@ -104,6 +104,7 @@ export type Database = {
       jobs: {
         Row: {
           company_link: string | null
+          company_logo_url: string | null
           company_name: string | null
           cover_letter_link: string | null
           description: string
@@ -126,6 +127,7 @@ export type Database = {
         }
         Insert: {
           company_link?: string | null
+          company_logo_url?: string | null
           company_name?: string | null
           cover_letter_link?: string | null
           description: string
@@ -148,6 +150,7 @@ export type Database = {
         }
         Update: {
           company_link?: string | null
+          company_logo_url?: string | null
           company_name?: string | null
           cover_letter_link?: string | null
           description?: string
@@ -234,6 +237,8 @@ export type Database = {
           location: string | null
           next_billing_month: string | null
           resume_count: number | null
+          resume_downloads_count: number | null
+          resume_downloads_reset_at: string | null
           resume_folder: string | null
           resume_key: string | null
           resume_url: string | null
@@ -259,6 +264,8 @@ export type Database = {
           location?: string | null
           next_billing_month?: string | null
           resume_count?: number | null
+          resume_downloads_count?: number | null
+          resume_downloads_reset_at?: string | null
           resume_folder?: string | null
           resume_key?: string | null
           resume_url?: string | null
@@ -284,6 +291,8 @@ export type Database = {
           location?: string | null
           next_billing_month?: string | null
           resume_count?: number | null
+          resume_downloads_count?: number | null
+          resume_downloads_reset_at?: string | null
           resume_folder?: string | null
           resume_key?: string | null
           resume_url?: string | null

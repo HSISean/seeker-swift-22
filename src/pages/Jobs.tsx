@@ -16,6 +16,7 @@ interface Job {
   salary: string;
   employment_type: string;
   company_name: string;
+  match_rating?: number;
 }
 
 const Jobs = () => {
@@ -90,9 +91,16 @@ const Jobs = () => {
                 onClick={() => navigate(`/jobs/${job.id}`)}
               >
                 <CardHeader>
+                  <div className="flex items-start justify-between gap-4 mb-2">
+                    <CardTitle className="flex-1">{job.title}</CardTitle>
+                    {job.match_rating !== undefined && (
+                      <Badge variant="secondary" className="shrink-0">
+                        {job.match_rating}% Match
+                      </Badge>
+                    )}
+                  </div>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="mb-2">{job.title}</CardTitle>
                       <CardDescription className="flex items-center gap-4 text-base">
                         {job.company_name && (
                           <span className="flex items-center gap-1">

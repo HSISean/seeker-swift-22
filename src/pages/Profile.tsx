@@ -30,6 +30,7 @@ interface Profile {
   email: string;
   full_name: string;
   job_title: string;
+  job_titles: string[];
   location: string;
   salary_min: number;
   salary_max: number;
@@ -148,6 +149,7 @@ const Profile = () => {
         .update({
           full_name: profile.full_name,
           job_title: profile.job_title,
+          job_titles: profile.job_titles,
           location: profile.location,
           salary_min: profile.salary_min,
           salary_max: profile.salary_max,
@@ -291,6 +293,24 @@ const Profile = () => {
                       setProfile({ ...profile!, job_title: e.target.value })
                     }
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label>Additional Job Titles (Max 3)</Label>
+                  {[0, 1, 2].map((index) => (
+                    <Input
+                      key={index}
+                      placeholder={`Job title ${index + 1}`}
+                      value={profile?.job_titles?.[index] || ''}
+                      onChange={(e) => {
+                        const newTitles = [...(profile?.job_titles || [])];
+                        newTitles[index] = e.target.value;
+                        setProfile({ ...profile!, job_titles: newTitles.filter(t => t) });
+                      }}
+                    />
+                  ))}
+                  <p className="text-xs text-muted-foreground">
+                    Add up to 3 job titles you're interested in
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="location">Location</Label>

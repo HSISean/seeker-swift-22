@@ -8,8 +8,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Briefcase, MapPin, DollarSign, Search, ArrowLeft } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Briefcase, MapPin, DollarSign, Search, ArrowLeft, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface Job {
   id: string;
@@ -21,6 +25,7 @@ interface Job {
   company_name: string;
   company_logo_url?: string;
   match_rating?: number;
+  posted_at: string;
 }
 
 const Jobs = () => {
@@ -31,6 +36,7 @@ const Jobs = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [matchFilter, setMatchFilter] = useState<string>('all');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -125,11 +131,16 @@ const Jobs = () => {
     const threshold = getMatchThreshold(subscriptionType);
     const meetsSubscription = rating < threshold;
 
-    if (matchFilter === 'all') return matchesSearch && meetsSubscription;
+    // Filter by selected date
+    const matchesDate = selectedDate 
+      ? new Date(job.posted_at).toDateString() === selectedDate.toDateString()
+      : true;
+
+    if (matchFilter === 'all') return matchesSearch && meetsSubscription && matchesDate;
     
-    if (matchFilter === 'high' && rating >= 80) return matchesSearch && meetsSubscription;
-    if (matchFilter === 'medium' && rating >= 60 && rating < 80) return matchesSearch && meetsSubscription;
-    if (matchFilter === 'low' && rating < 60) return matchesSearch && meetsSubscription;
+    if (matchFilter === 'high' && rating >= 80) return matchesSearch && meetsSubscription && matchesDate;
+    if (matchFilter === 'medium' && rating >= 60 && rating < 80) return matchesSearch && meetsSubscription && matchesDate;
+    if (matchFilter === 'low' && rating < 60) return matchesSearch && meetsSubscription && matchesDate;
     
     return false;
   });
@@ -168,6 +179,39 @@ const Jobs = () => {
                 className="pl-10"
               />
             </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[240px] justify-start text-left font-normal",
+                    !selectedDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {selectedDate ? format(selectedDate, "PPP") : "Filter by date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  initialFocus
+                />
+                {selectedDate && (
+                  <div className="p-3 border-t">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setSelectedDate(undefined)}
+                    >
+                      Clear date filter
+                    </Button>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
             <Select value={matchFilter} onValueChange={setMatchFilter}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Filter by match" />

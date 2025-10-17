@@ -232,6 +232,7 @@ export type Database = {
           full_name: string | null
           id: string
           job_title: string | null
+          job_titles: string[] | null
           jobs_applied: number | null
           jobs_sent: number | null
           location: string | null
@@ -259,6 +260,7 @@ export type Database = {
           full_name?: string | null
           id: string
           job_title?: string | null
+          job_titles?: string[] | null
           jobs_applied?: number | null
           jobs_sent?: number | null
           location?: string | null
@@ -286,6 +288,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           job_title?: string | null
+          job_titles?: string[] | null
           jobs_applied?: number | null
           jobs_sent?: number | null
           location?: string | null

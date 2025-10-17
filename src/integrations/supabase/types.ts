@@ -411,13 +411,20 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      cover_letter_subscription_enum: "0.00" | "2.99"
+      cover_letter_subscription_enum: "0.00" | "2.99" | "0.99" | "1.99"
       interest_level_enum:
         | "browsing"
         | "actively_looking"
         | "on_the_hunt"
         | "need_a_job_asap"
-      job_subscription_enum: "0.00" | "6.99" | "15.99" | "29.99"
+      job_subscription_enum:
+        | "0.00"
+        | "6.99"
+        | "15.99"
+        | "29.99"
+        | "4.99"
+        | "9.99"
+        | "19.99"
       resume_subscription_enum: "0.00" | "2.99" | "3.99" | "5.99"
     }
     CompositeTypes: {
@@ -546,14 +553,22 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      cover_letter_subscription_enum: ["0.00", "2.99"],
+      cover_letter_subscription_enum: ["0.00", "2.99", "0.99", "1.99"],
       interest_level_enum: [
         "browsing",
         "actively_looking",
         "on_the_hunt",
         "need_a_job_asap",
       ],
-      job_subscription_enum: ["0.00", "6.99", "15.99", "29.99"],
+      job_subscription_enum: [
+        "0.00",
+        "6.99",
+        "15.99",
+        "29.99",
+        "4.99",
+        "9.99",
+        "19.99",
+      ],
       resume_subscription_enum: ["0.00", "2.99", "3.99", "5.99"],
     },
   },

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Briefcase, MapPin, DollarSign, Search, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -23,6 +24,7 @@ const Jobs = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [matchFilter, setMatchFilter] = useState<string>('all');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -46,12 +48,21 @@ const Jobs = () => {
     }
   };
 
-  const filteredJobs = jobs.filter(
-    (job) =>
+  const filteredJobs = jobs.filter((job) => {
+    const matchesSearch =
       job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.location?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      job.location?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    if (matchFilter === 'all') return matchesSearch;
+    
+    const rating = job.match_rating || 0;
+    if (matchFilter === 'high' && rating >= 80) return matchesSearch;
+    if (matchFilter === 'medium' && rating >= 60 && rating < 80) return matchesSearch;
+    if (matchFilter === 'low' && rating < 60) return matchesSearch;
+    
+    return false;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
@@ -67,14 +78,27 @@ const Jobs = () => {
       <main className="container mx-auto px-4 py-12">
         <div className="mb-8">
           <h1 className="mb-4 text-4xl font-bold">Find Your Next Job</h1>
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-            <Input
-              placeholder="Search by title, company, or location..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+          <div className="flex gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+              <Input
+                placeholder="Search by title, company, or location..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={matchFilter} onValueChange={setMatchFilter}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Filter by match" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Matches</SelectItem>
+                <SelectItem value="high">High (80%+)</SelectItem>
+                <SelectItem value="medium">Medium (60-79%)</SelectItem>
+                <SelectItem value="low">Low (&lt;60%)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

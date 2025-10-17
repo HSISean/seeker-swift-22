@@ -204,7 +204,7 @@ const Profile = () => {
 
     setSavingSubscription(true);
     try {
-      // Find or create matching subscription type
+      // Find matching subscription type
       const subType = profile.subscriptions.subscription_type;
       const matchingType = subscriptionTypes.find(
         (t) =>
@@ -214,32 +214,16 @@ const Profile = () => {
           t.cover_letter_subscription === subType.cover_letter_subscription
       );
 
-      let typeId: string;
-
-      // If no matching type exists, create one
       if (!matchingType) {
-        const { data: newType, error: insertError } = await supabase
-          .from('subscription_type')
-          .insert({
-            interest_level: subType.interest_level as any,
-            resume_subscription: subType.resume_subscription as any,
-            job_subscription: subType.job_subscription as any,
-            cover_letter_subscription: subType.cover_letter_subscription as any,
-          })
-          .select()
-          .single();
-
-        if (insertError) throw insertError;
-        typeId = newType.id;
-      } else {
-        typeId = matchingType.id!;
+        toast.error('Selected subscription plan is not available');
+        return;
       }
 
       // Update subscription to point to the matching type
       const { error: updateError } = await supabase
         .from('subscriptions')
         .update({
-          subscription_type_id: typeId,
+          subscription_type_id: matchingType.id,
           is_trial: false,
         })
         .eq('id', profile.subscriptions.id);

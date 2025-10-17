@@ -257,6 +257,7 @@ export type Database = {
           salary_min: number | null
           subscriptions: string | null
           updated_at: string | null
+          uuid: string | null
           videos_watched: number | null
           webhook: string | null
         }
@@ -280,6 +281,7 @@ export type Database = {
           salary_min?: number | null
           subscriptions?: string | null
           updated_at?: string | null
+          uuid?: string | null
           videos_watched?: number | null
           webhook?: string | null
         }
@@ -303,6 +305,7 @@ export type Database = {
           salary_min?: number | null
           subscriptions?: string | null
           updated_at?: string | null
+          uuid?: string | null
           videos_watched?: number | null
           webhook?: string | null
         }

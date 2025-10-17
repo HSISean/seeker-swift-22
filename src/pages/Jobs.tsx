@@ -107,11 +107,11 @@ const Jobs = () => {
 
   const getMatchThreshold = (subType: string): number => {
     switch (subType) {
-      case '29.99': return 85; // Premium: 85%+
-      case '19.99': return 75; // Plus: 75%+
-      case '9.99': return 70; // Basic: 70%+
-      case '4.99': return 0; // Free: all jobs
-      default: return 0;
+      case '29.99': return 100; // Premium: All jobs (no restriction)
+      case '19.99': return 85; // Plus: Jobs < 85%
+      case '9.99': return 75; // Basic: Jobs < 75%
+      case '4.99': return 70; // Free: Jobs < 70%
+      default: return 70;
     }
   };
 
@@ -123,7 +123,7 @@ const Jobs = () => {
 
     const rating = job.match_rating || 0;
     const threshold = getMatchThreshold(subscriptionType);
-    const meetsSubscription = rating >= threshold;
+    const meetsSubscription = rating < threshold;
 
     if (matchFilter === 'all') return matchesSearch && meetsSubscription;
     

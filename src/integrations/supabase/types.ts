@@ -318,25 +318,52 @@ export type Database = {
       }
       subscription_type: {
         Row: {
-          cover_letter_subscription: boolean | null
+          cover_letter_subscription:
+            | Database["public"]["Enums"]["cover_letter_subscription_enum"]
+            | null
           created_at: string | null
           id: string
-          interest_level: string | null
-          job_subscription: boolean | null
+          interest_level:
+            | Database["public"]["Enums"]["interest_level_enum"]
+            | null
+          job_subscription:
+            | Database["public"]["Enums"]["job_subscription_enum"]
+            | null
+          resume_subscription:
+            | Database["public"]["Enums"]["resume_subscription_enum"]
+            | null
         }
         Insert: {
-          cover_letter_subscription?: boolean | null
+          cover_letter_subscription?:
+            | Database["public"]["Enums"]["cover_letter_subscription_enum"]
+            | null
           created_at?: string | null
           id?: string
-          interest_level?: string | null
-          job_subscription?: boolean | null
+          interest_level?:
+            | Database["public"]["Enums"]["interest_level_enum"]
+            | null
+          job_subscription?:
+            | Database["public"]["Enums"]["job_subscription_enum"]
+            | null
+          resume_subscription?:
+            | Database["public"]["Enums"]["resume_subscription_enum"]
+            | null
         }
         Update: {
-          cover_letter_subscription?: boolean | null
+          cover_letter_subscription?:
+            | Database["public"]["Enums"]["cover_letter_subscription_enum"]
+            | null
           created_at?: string | null
           id?: string
-          interest_level?: string | null
-          job_subscription?: boolean | null
+          interest_level?:
+            | Database["public"]["Enums"]["interest_level_enum"]
+            | null
+          job_subscription?:
+            | Database["public"]["Enums"]["job_subscription_enum"]
+            | null
+          resume_subscription?:
+            | Database["public"]["Enums"]["resume_subscription_enum"]
+            | null
         }
         Relationships: []
       }
@@ -348,7 +375,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      cover_letter_subscription_enum: "0.00" | "2.99"
+      interest_level_enum:
+        | "browsing"
+        | "actively_looking"
+        | "on_the_hunt"
+        | "need_a_job_asap"
+      job_subscription_enum: "0.00" | "6.99" | "15.99" | "29.99"
+      resume_subscription_enum: "0.00" | "2.99" | "3.99" | "5.99"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -475,6 +509,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      cover_letter_subscription_enum: ["0.00", "2.99"],
+      interest_level_enum: [
+        "browsing",
+        "actively_looking",
+        "on_the_hunt",
+        "need_a_job_asap",
+      ],
+      job_subscription_enum: ["0.00", "6.99", "15.99", "29.99"],
+      resume_subscription_enum: ["0.00", "2.99", "3.99", "5.99"],
+    },
   },
 } as const

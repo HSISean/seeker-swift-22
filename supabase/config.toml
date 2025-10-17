@@ -1,4 +1,1 @@
 project_id = "urkwkjnmercbpeinqmba"
-
-[functions.insert-job]
-verify_jwt = false

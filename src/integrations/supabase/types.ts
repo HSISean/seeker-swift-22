@@ -251,6 +251,7 @@ export type Database = {
           location: string | null
           next_billing_month: string | null
           resume_count: number | null
+          resume_folder: string | null
           resume_key: string | null
           resume_url: string | null
           salary_max: number | null
@@ -275,6 +276,7 @@ export type Database = {
           location?: string | null
           next_billing_month?: string | null
           resume_count?: number | null
+          resume_folder?: string | null
           resume_key?: string | null
           resume_url?: string | null
           salary_max?: number | null
@@ -299,6 +301,7 @@ export type Database = {
           location?: string | null
           next_billing_month?: string | null
           resume_count?: number | null
+          resume_folder?: string | null
           resume_key?: string | null
           resume_url?: string | null
           salary_max?: number | null

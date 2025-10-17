@@ -120,8 +120,7 @@ export type Database = {
           posted_at: string | null
           requirements: string[] | null
           resume_link: string | null
-          salary_max: number | null
-          salary_min: number | null
+          salary: string | null
           title: string
           user_profile_id: string | null
         }
@@ -143,8 +142,7 @@ export type Database = {
           posted_at?: string | null
           requirements?: string[] | null
           resume_link?: string | null
-          salary_max?: number | null
-          salary_min?: number | null
+          salary?: string | null
           title: string
           user_profile_id?: string | null
         }
@@ -166,8 +164,7 @@ export type Database = {
           posted_at?: string | null
           requirements?: string[] | null
           resume_link?: string | null
-          salary_max?: number | null
-          salary_min?: number | null
+          salary?: string | null
           title?: string
           user_profile_id?: string | null
         }

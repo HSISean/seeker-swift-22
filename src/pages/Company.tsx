@@ -22,8 +22,7 @@ interface Job {
   title: string;
   description: string;
   location: string;
-  salary_min: number;
-  salary_max: number;
+  salary: string;
   employment_type: string;
 }
 
@@ -181,12 +180,11 @@ const Company = () => {
                     <p className="mb-4 text-muted-foreground line-clamp-2">
                       {job.description}
                     </p>
-                    {job.salary_min && job.salary_max && (
+                    {job.salary && (
                       <div className="flex items-center gap-2 text-primary">
                         <DollarSign className="h-4 w-4" />
                         <span className="font-semibold">
-                          ${job.salary_min.toLocaleString()} - $
-                          {job.salary_max.toLocaleString()}
+                          {job.salary}
                         </span>
                       </div>
                     )}

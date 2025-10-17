@@ -13,8 +13,7 @@ interface Job {
   title: string;
   description: string;
   location: string;
-  salary_min: number;
-  salary_max: number;
+  salary: string;
   employment_type: string;
   requirements: string[];
   company_id: string;
@@ -157,12 +156,10 @@ const JobDetails = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {job.salary_min && job.salary_max && (
+              {job.salary && (
                 <div className="flex items-center gap-2 text-lg font-semibold text-primary">
                   <DollarSign className="h-5 w-5" />
-                  <span>
-                    ${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()} / year
-                  </span>
+                  <span>{job.salary}</span>
                 </div>
               )}
 

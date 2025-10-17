@@ -355,117 +355,58 @@ const Profile = () => {
                     </div>
                   )}
                   
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="interestLevel">Interest Level</Label>
-                      <Select
-                        value={profile.subscriptions.subscription_type.interest_level || ''}
-                        onValueChange={(value) =>
-                          setProfile({
-                            ...profile,
-                            subscriptions: {
-                              ...profile.subscriptions!,
-                              subscription_type: {
-                                ...profile.subscriptions!.subscription_type!,
-                                interest_level: value,
-                              },
-                            },
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="browsing">Browsing</SelectItem>
-                          <SelectItem value="actively_looking">Actively Looking</SelectItem>
-                          <SelectItem value="on_the_hunt">On the Hunt</SelectItem>
-                          <SelectItem value="need_a_job_asap">Need a Job ASAP</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="resumeSubscription">Resume Subscription</Label>
-                      <Select
-                        value={profile.subscriptions.subscription_type.resume_subscription || ''}
-                        onValueChange={(value) =>
-                          setProfile({
-                            ...profile,
-                            subscriptions: {
-                              ...profile.subscriptions!,
-                              subscription_type: {
-                                ...profile.subscriptions!.subscription_type!,
-                                resume_subscription: value,
-                              },
-                            },
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0.00">Free ($0.00)</SelectItem>
-                          <SelectItem value="2.99">Basic ($2.99)</SelectItem>
-                          <SelectItem value="3.99">Plus ($3.99)</SelectItem>
-                          <SelectItem value="5.99">Premium ($5.99)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="jobSubscription">Job Subscription</Label>
+                      <Label>Subscription Plan</Label>
                       <Select
                         value={profile.subscriptions.subscription_type.job_subscription || ''}
-                        onValueChange={(value) =>
-                          setProfile({
-                            ...profile,
-                            subscriptions: {
-                              ...profile.subscriptions!,
-                              subscription_type: {
-                                ...profile.subscriptions!.subscription_type!,
-                                job_subscription: value,
+                        onValueChange={(value) => {
+                          const selectedType = subscriptionTypes.find(t => t.job_subscription === value);
+                          if (selectedType) {
+                            setProfile({
+                              ...profile,
+                              subscriptions: {
+                                ...profile.subscriptions!,
+                                subscription_type: selectedType,
                               },
-                            },
-                          })
-                        }
+                            });
+                          }
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="0.00">Free ($0.00)</SelectItem>
-                          <SelectItem value="6.99">Basic ($6.99)</SelectItem>
-                          <SelectItem value="15.99">Plus ($15.99)</SelectItem>
-                          <SelectItem value="29.99">Premium ($29.99)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="coverLetterSubscription">Cover Letter Subscription</Label>
-                      <Select
-                        value={profile.subscriptions.subscription_type.cover_letter_subscription || ''}
-                        onValueChange={(value) =>
-                          setProfile({
-                            ...profile,
-                            subscriptions: {
-                              ...profile.subscriptions!,
-                              subscription_type: {
-                                ...profile.subscriptions!.subscription_type!,
-                                cover_letter_subscription: value,
-                              },
-                            },
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0.00">Free ($0.00)</SelectItem>
-                          <SelectItem value="2.99">Premium ($2.99)</SelectItem>
+                          <SelectItem value="0.00">
+                            <div className="flex flex-col">
+                              <span className="font-medium">Free Trial</span>
+                              <span className="text-xs text-muted-foreground">Match: All jobs | Resume: Free | Cover Letter: Free</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="4.99">
+                            <div className="flex flex-col">
+                              <span className="font-medium">Free - $4.99/mo</span>
+                              <span className="text-xs text-muted-foreground">Match: All jobs | Resume: Free | Cover Letter: Free</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="9.99">
+                            <div className="flex flex-col">
+                              <span className="font-medium">Basic - $9.99/mo</span>
+                              <span className="text-xs text-muted-foreground">Match: 70%+ | Resume: $2.99 | Cover Letter: $0.99</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="19.99">
+                            <div className="flex flex-col">
+                              <span className="font-medium">Plus - $19.99/mo</span>
+                              <span className="text-xs text-muted-foreground">Match: 75%+ | Resume: $3.99 | Cover Letter: $1.99</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="29.99">
+                            <div className="flex flex-col">
+                              <span className="font-medium">Premium - $29.99/mo</span>
+                              <span className="text-xs text-muted-foreground">Match: 85%+ | Resume: $5.99 | Cover Letter: $2.99</span>
+                            </div>
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

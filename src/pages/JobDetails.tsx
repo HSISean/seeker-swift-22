@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Briefcase, MapPin, DollarSign, ArrowLeft, Building2, CheckCircle2 } from 'lucide-react';
+import { Briefcase, MapPin, DollarSign, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Job {
@@ -16,14 +16,7 @@ interface Job {
   salary: string;
   employment_type: string;
   requirements: string[];
-  company_id: string;
-  companies: {
-    id: string;
-    name: string;
-    description: string;
-    logo_url: string;
-    website: string;
-  };
+  company_name: string;
 }
 
 const JobDetails = () => {
@@ -46,7 +39,7 @@ const JobDetails = () => {
     try {
       const { data, error } = await supabase
         .from('jobs')
-        .select('*, companies(*)')
+        .select('*')
         .eq('id', id)
         .single();
 
@@ -135,13 +128,12 @@ const JobDetails = () => {
                 <div className="flex-1">
                   <CardTitle className="mb-4 text-3xl">{job.title}</CardTitle>
                   <div className="flex flex-wrap gap-4 text-muted-foreground">
-                    <span
-                      className="flex cursor-pointer items-center gap-1 hover:text-primary"
-                      onClick={() => navigate(`/companies/${job.company_id}`)}
-                    >
-                      <Briefcase className="h-4 w-4" />
-                      {job.companies.name}
-                    </span>
+                    {job.company_name && (
+                      <span className="flex items-center gap-1">
+                        <Briefcase className="h-4 w-4" />
+                        {job.company_name}
+                      </span>
+                    )}
                     {job.location && (
                       <span className="flex items-center gap-1">
                         <MapPin className="h-4 w-4" />
@@ -193,13 +185,6 @@ const JobDetails = () => {
                     {applying ? 'Submitting...' : 'Apply Now'}
                   </Button>
                 )}
-                <Button
-                  variant="outline"
-                  onClick={() => navigate(`/companies/${job.company_id}`)}
-                >
-                  <Building2 className="mr-2 h-4 w-4" />
-                  View Company
-                </Button>
               </div>
             </CardContent>
           </Card>

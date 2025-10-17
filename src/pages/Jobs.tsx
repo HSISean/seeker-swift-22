@@ -15,10 +15,7 @@ interface Job {
   location: string;
   salary: string;
   employment_type: string;
-  companies: {
-    name: string;
-    logo_url: string;
-  };
+  company_name: string;
 }
 
 const Jobs = () => {
@@ -35,7 +32,7 @@ const Jobs = () => {
     try {
       const { data, error } = await supabase
         .from('jobs')
-        .select('*, companies(name, logo_url)')
+        .select('*')
         .eq('is_active', true)
         .order('posted_at', { ascending: false });
 
@@ -51,7 +48,7 @@ const Jobs = () => {
   const filteredJobs = jobs.filter(
     (job) =>
       job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.companies.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.location?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -97,10 +94,12 @@ const Jobs = () => {
                     <div className="flex-1">
                       <CardTitle className="mb-2">{job.title}</CardTitle>
                       <CardDescription className="flex items-center gap-4 text-base">
-                        <span className="flex items-center gap-1">
-                          <Briefcase className="h-4 w-4" />
-                          {job.companies.name}
-                        </span>
+                        {job.company_name && (
+                          <span className="flex items-center gap-1">
+                            <Briefcase className="h-4 w-4" />
+                            {job.company_name}
+                          </span>
+                        )}
                         {job.location && (
                           <span className="flex items-center gap-1">
                             <MapPin className="h-4 w-4" />

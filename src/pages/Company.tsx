@@ -43,9 +43,23 @@ const Company = () => {
 
   const fetchCompanyData = async () => {
     try {
-      const [companyResult, jobsResult, applicationsResult] = await Promise.all([
-        supabase.from('companies').select('*').eq('id', id).single(),
-        supabase.from('jobs').select('*').eq('company_id', id).eq('is_active', true),
+      // First fetch company data
+      const { data: companyData, error: companyError } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (companyError) throw companyError;
+      setCompany(companyData);
+
+      // Then fetch jobs and applications in parallel
+      const [jobsResult, applicationsResult] = await Promise.all([
+        supabase
+          .from('jobs')
+          .select('*')
+          .eq('company_name', companyData.name)
+          .eq('is_active', true),
         user
           ? supabase
               .from('applications')
@@ -54,10 +68,7 @@ const Company = () => {
           : Promise.resolve({ data: null }),
       ]);
 
-      if (companyResult.error) throw companyResult.error;
       if (jobsResult.error) throw jobsResult.error;
-
-      setCompany(companyResult.data);
       setJobs(jobsResult.data || []);
       
       if (applicationsResult.data) {

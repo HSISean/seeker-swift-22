@@ -103,8 +103,8 @@ export type Database = {
       }
       jobs: {
         Row: {
-          company_id: string
           company_link: string | null
+          company_name: string | null
           cover_letter_link: string | null
           description: string
           employment_type: string | null
@@ -125,8 +125,8 @@ export type Database = {
           user_profile_id: string | null
         }
         Insert: {
-          company_id: string
           company_link?: string | null
+          company_name?: string | null
           cover_letter_link?: string | null
           description: string
           employment_type?: string | null
@@ -147,8 +147,8 @@ export type Database = {
           user_profile_id?: string | null
         }
         Update: {
-          company_id?: string
           company_link?: string | null
+          company_name?: string | null
           cover_letter_link?: string | null
           description?: string
           employment_type?: string | null
@@ -169,13 +169,6 @@ export type Database = {
           user_profile_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "jobs_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "jobs_job_site_id_fkey"
             columns: ["job_site_id"]

@@ -43,9 +43,7 @@ interface Application {
   applied_at: string;
   jobs: {
     title: string;
-    companies: {
-      name: string;
-    };
+    company_name: string;
   };
 }
 
@@ -128,7 +126,7 @@ const Profile = () => {
     try {
       const { data, error } = await supabase
         .from('applications')
-        .select('*, jobs(title, companies(name))')
+        .select('*, jobs(title, company_name)')
         .eq('user_id', user?.id)
         .order('applied_at', { ascending: false });
 
@@ -564,7 +562,7 @@ const Profile = () => {
                     <div>
                       <p className="font-medium">{app.jobs.title}</p>
                       <p className="text-sm text-muted-foreground">
-                        {app.jobs.companies.name}
+                        {app.jobs.company_name}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">

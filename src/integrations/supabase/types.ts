@@ -83,48 +83,93 @@ export type Database = {
         }
         Relationships: []
       }
+      job_sites: {
+        Row: {
+          created_at: string | null
+          id: string
+          site_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          site_name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          site_name?: string
+        }
+        Relationships: []
+      }
       jobs: {
         Row: {
           company_id: string
+          company_link: string | null
+          cover_letter_link: string | null
           description: string
           employment_type: string | null
           expires_at: string | null
           id: string
           is_active: boolean | null
+          j_uuid: string | null
+          job_link: string | null
+          job_site_id: string | null
+          justification: string | null
           location: string | null
+          match_rating: number | null
           posted_at: string | null
           requirements: string[] | null
+          resume_link: string | null
           salary_max: number | null
           salary_min: number | null
           title: string
+          user_profile_id: string | null
         }
         Insert: {
           company_id: string
+          company_link?: string | null
+          cover_letter_link?: string | null
           description: string
           employment_type?: string | null
           expires_at?: string | null
           id?: string
           is_active?: boolean | null
+          j_uuid?: string | null
+          job_link?: string | null
+          job_site_id?: string | null
+          justification?: string | null
           location?: string | null
+          match_rating?: number | null
           posted_at?: string | null
           requirements?: string[] | null
+          resume_link?: string | null
           salary_max?: number | null
           salary_min?: number | null
           title: string
+          user_profile_id?: string | null
         }
         Update: {
           company_id?: string
+          company_link?: string | null
+          cover_letter_link?: string | null
           description?: string
           employment_type?: string | null
           expires_at?: string | null
           id?: string
           is_active?: boolean | null
+          j_uuid?: string | null
+          job_link?: string | null
+          job_site_id?: string | null
+          justification?: string | null
           location?: string | null
+          match_rating?: number | null
           posted_at?: string | null
           requirements?: string[] | null
+          resume_link?: string | null
           salary_max?: number | null
           salary_min?: number | null
           title?: string
+          user_profile_id?: string | null
         }
         Relationships: [
           {
@@ -134,44 +179,164 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "jobs_job_site_id_fkey"
+            columns: ["job_site_id"]
+            isOneToOne: false
+            referencedRelation: "job_sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_user_profile_id_fkey"
+            columns: ["user_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          payment_date: string | null
+          status: string | null
+          subscription_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          payment_date?: string | null
+          status?: string | null
+          subscription_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          payment_date?: string | null
+          status?: string | null
+          subscription_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_type"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
         Row: {
+          account_active: boolean | null
           created_at: string | null
+          drive_id: string | null
           email: string
+          enhanced_resume_folder: string | null
           full_name: string | null
           id: string
           job_title: string | null
+          jobs_applied: number | null
+          jobs_sent: number | null
           location: string | null
+          next_billing_month: string | null
+          resume_count: number | null
+          resume_key: string | null
           resume_url: string | null
           salary_max: number | null
           salary_min: number | null
+          subscriptions: string | null
           updated_at: string | null
+          videos_watched: number | null
+          webhook: string | null
         }
         Insert: {
+          account_active?: boolean | null
           created_at?: string | null
+          drive_id?: string | null
           email: string
+          enhanced_resume_folder?: string | null
           full_name?: string | null
           id: string
           job_title?: string | null
+          jobs_applied?: number | null
+          jobs_sent?: number | null
           location?: string | null
+          next_billing_month?: string | null
+          resume_count?: number | null
+          resume_key?: string | null
           resume_url?: string | null
           salary_max?: number | null
           salary_min?: number | null
+          subscriptions?: string | null
           updated_at?: string | null
+          videos_watched?: number | null
+          webhook?: string | null
         }
         Update: {
+          account_active?: boolean | null
           created_at?: string | null
+          drive_id?: string | null
           email?: string
+          enhanced_resume_folder?: string | null
           full_name?: string | null
           id?: string
           job_title?: string | null
+          jobs_applied?: number | null
+          jobs_sent?: number | null
           location?: string | null
+          next_billing_month?: string | null
+          resume_count?: number | null
+          resume_key?: string | null
           resume_url?: string | null
           salary_max?: number | null
           salary_min?: number | null
+          subscriptions?: string | null
           updated_at?: string | null
+          videos_watched?: number | null
+          webhook?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_subscriptions_fkey"
+            columns: ["subscriptions"]
+            isOneToOne: false
+            referencedRelation: "subscription_type"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_type: {
+        Row: {
+          cover_letter_subscription: boolean | null
+          created_at: string | null
+          id: string
+          interest_level: string | null
+          job_subscription: boolean | null
+        }
+        Insert: {
+          cover_letter_subscription?: boolean | null
+          created_at?: string | null
+          id?: string
+          interest_level?: string | null
+          job_subscription?: boolean | null
+        }
+        Update: {
+          cover_letter_subscription?: boolean | null
+          created_at?: string | null
+          id?: string
+          interest_level?: string | null
+          job_subscription?: boolean | null
         }
         Relationships: []
       }

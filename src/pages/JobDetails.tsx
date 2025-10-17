@@ -240,8 +240,8 @@ const JobDetails = () => {
               <div className="flex items-center gap-6 mb-6">
                 {job.company_logo_url && (
                   <Avatar className="h-20 w-20">
-                    <AvatarImage src={job.company_logo_url} alt={job.company_name} />
-                    <AvatarFallback className="text-2xl">{job.company_name?.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={job.company_logo_url} alt={job.company_name || 'Company'} />
+                    <AvatarFallback className="text-2xl">{job.company_name?.charAt(0) || 'C'}</AvatarFallback>
                   </Avatar>
                 )}
                 <div className="flex-1">

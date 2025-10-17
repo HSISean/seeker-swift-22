@@ -207,8 +207,8 @@ const Jobs = () => {
                     <div className="flex items-start gap-4 mb-2">
                       {job.company_logo_url && (
                         <Avatar className="h-12 w-12">
-                          <AvatarImage src={job.company_logo_url} alt={job.company_name} />
-                          <AvatarFallback>{job.company_name?.charAt(0)}</AvatarFallback>
+                          <AvatarImage src={job.company_logo_url} alt={job.company_name || 'Company'} />
+                          <AvatarFallback>{job.company_name?.charAt(0) || 'C'}</AvatarFallback>
                         </Avatar>
                       )}
                       <div className="flex-1 flex items-start justify-between gap-4">

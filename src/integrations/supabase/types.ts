@@ -108,7 +108,6 @@ export type Database = {
           company_name: string | null
           cover_letter_link: string | null
           description: string
-          employment_type: string | null
           expires_at: string | null
           id: string
           is_active: boolean | null
@@ -119,7 +118,6 @@ export type Database = {
           location: string | null
           match_rating: number | null
           posted_at: string | null
-          requirements: string[] | null
           resume_link: string | null
           salary: string | null
           title: string
@@ -131,7 +129,6 @@ export type Database = {
           company_name?: string | null
           cover_letter_link?: string | null
           description: string
-          employment_type?: string | null
           expires_at?: string | null
           id?: string
           is_active?: boolean | null
@@ -142,7 +139,6 @@ export type Database = {
           location?: string | null
           match_rating?: number | null
           posted_at?: string | null
-          requirements?: string[] | null
           resume_link?: string | null
           salary?: string | null
           title: string
@@ -154,7 +150,6 @@ export type Database = {
           company_name?: string | null
           cover_letter_link?: string | null
           description?: string
-          employment_type?: string | null
           expires_at?: string | null
           id?: string
           is_active?: boolean | null
@@ -165,7 +160,6 @@ export type Database = {
           location?: string | null
           match_rating?: number | null
           posted_at?: string | null
-          requirements?: string[] | null
           resume_link?: string | null
           salary?: string | null
           title?: string

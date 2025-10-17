@@ -171,29 +171,28 @@ const Profile = () => {
 
     setUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${user.id}/resume.${fileExt}`;
+      const formData = new FormData();
+      formData.append('file', file);
 
-      const { error: uploadError } = await supabase.storage
-        .from('resumes')
-        .upload(filePath, file, { upsert: true });
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const { data, error } = await supabase.functions.invoke('upload-resume-to-s3', {
+        body: formData,
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
 
-      if (uploadError) throw uploadError;
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error || 'Upload failed');
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('resumes')
-        .getPublicUrl(filePath);
-
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ resume_url: publicUrl })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
-      setProfile({ ...profile!, resume_url: publicUrl });
-      toast.success('Resume uploaded successfully!');
+      setProfile({ ...profile!, resume_url: data.url });
+      toast.success('Resume uploaded successfully to S3!');
+      
+      // Refresh profile to get updated data
+      await fetchProfile();
     } catch (error: any) {
+      console.error('Resume upload error:', error);
       toast.error(error.message || 'Failed to upload resume');
     } finally {
       setUploading(false);

@@ -6,14 +6,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Upload, FileText, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface SubscriptionType {
+  id?: string;
   interest_level: string | null;
   resume_subscription: string | null;
   job_subscription: string | null;
   cover_letter_subscription: string | null;
+}
+
+interface Subscription {
+  id: string;
+  trial_ends_at: string;
+  is_trial: boolean;
+  subscription_type: SubscriptionType | null;
 }
 
 interface Profile {
@@ -25,7 +34,7 @@ interface Profile {
   salary_min: number;
   salary_max: number;
   resume_url: string;
-  subscription_type?: SubscriptionType | null;
+  subscriptions?: Subscription | null;
 }
 
 interface Application {
@@ -48,36 +57,70 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [savingSubscription, setSavingSubscription] = useState(false);
+  const [subscriptionTypes, setSubscriptionTypes] = useState<SubscriptionType[]>([]);
 
   useEffect(() => {
     if (user) {
       fetchProfile();
       fetchApplications();
+      fetchSubscriptionTypes();
     }
   }, [user]);
 
   const fetchProfile = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
+        .select('*')
+        .eq('id', user?.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Fetch subscription separately
+      const { data: subscriptionData, error: subscriptionError } = await supabase
+        .from('subscriptions')
         .select(`
-          *,
-          subscription_type:subscriptions (
+          id,
+          trial_ends_at,
+          is_trial,
+          subscription_type:subscription_type_id (
+            id,
             interest_level,
             resume_subscription,
             job_subscription,
             cover_letter_subscription
           )
         `)
-        .eq('id', user?.id)
+        .eq('user_id', user?.id)
         .single();
 
-      if (error) throw error;
-      setProfile(data);
+      if (subscriptionError && subscriptionError.code !== 'PGRST116') {
+        console.error('Subscription fetch error:', subscriptionError);
+      }
+
+      setProfile({
+        ...profileData,
+        subscriptions: subscriptionData || null,
+      });
     } catch (error: any) {
       toast.error('Failed to load profile');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSubscriptionTypes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('subscription_type')
+        .select('*');
+
+      if (error) throw error;
+      setSubscriptionTypes(data || []);
+    } catch (error: any) {
+      console.error('Failed to load subscription types:', error);
     }
   };
 
@@ -154,6 +197,63 @@ const Profile = () => {
       toast.error(error.message || 'Failed to upload resume');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleSaveSubscription = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profile?.subscriptions?.subscription_type) return;
+
+    setSavingSubscription(true);
+    try {
+      // Find or create matching subscription type
+      const subType = profile.subscriptions.subscription_type;
+      const matchingType = subscriptionTypes.find(
+        (t) =>
+          t.interest_level === subType.interest_level &&
+          t.resume_subscription === subType.resume_subscription &&
+          t.job_subscription === subType.job_subscription &&
+          t.cover_letter_subscription === subType.cover_letter_subscription
+      );
+
+      let typeId: string;
+
+      // If no matching type exists, create one
+      if (!matchingType) {
+        const { data: newType, error: insertError } = await supabase
+          .from('subscription_type')
+          .insert({
+            interest_level: subType.interest_level as any,
+            resume_subscription: subType.resume_subscription as any,
+            job_subscription: subType.job_subscription as any,
+            cover_letter_subscription: subType.cover_letter_subscription as any,
+          })
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+        typeId = newType.id;
+      } else {
+        typeId = matchingType.id!;
+      }
+
+      // Update subscription to point to the matching type
+      const { error: updateError } = await supabase
+        .from('subscriptions')
+        .update({
+          subscription_type_id: typeId,
+          is_trial: false,
+        })
+        .eq('id', profile.subscriptions.id);
+
+      if (updateError) throw updateError;
+      
+      toast.success('Subscription updated successfully!');
+      fetchProfile();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update subscription');
+    } finally {
+      setSavingSubscription(false);
     }
   };
 
@@ -262,44 +362,140 @@ const Profile = () => {
               <CardTitle>Subscription Plan</CardTitle>
             </CardHeader>
             <CardContent>
-              {profile?.subscription_type ? (
-                <div className="space-y-4">
+              {profile?.subscriptions?.subscription_type ? (
+                <form onSubmit={handleSaveSubscription} className="space-y-6">
+                  {profile.subscriptions.is_trial && (
+                    <div className="rounded-lg bg-primary/10 p-4">
+                      <p className="text-sm font-medium">
+                        🎉 You're on a free trial! Trial ends:{' '}
+                        {new Date(profile.subscriptions.trial_ends_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
+                  
                   <div className="grid gap-4 md:grid-cols-2">
-                    <div className="rounded-lg border p-4">
-                      <Label className="text-sm text-muted-foreground">Interest Level</Label>
-                      <p className="mt-1 font-medium capitalize">
-                        {profile.subscription_type.interest_level?.replace(/_/g, ' ') || 'Not set'}
-                      </p>
+                    <div className="space-y-2">
+                      <Label htmlFor="interestLevel">Interest Level</Label>
+                      <Select
+                        value={profile.subscriptions.subscription_type.interest_level || ''}
+                        onValueChange={(value) =>
+                          setProfile({
+                            ...profile,
+                            subscriptions: {
+                              ...profile.subscriptions!,
+                              subscription_type: {
+                                ...profile.subscriptions!.subscription_type!,
+                                interest_level: value,
+                              },
+                            },
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="browsing">Browsing</SelectItem>
+                          <SelectItem value="actively_looking">Actively Looking</SelectItem>
+                          <SelectItem value="on_the_hunt">On the Hunt</SelectItem>
+                          <SelectItem value="need_a_job_asap">Need a Job ASAP</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div className="rounded-lg border p-4">
-                      <Label className="text-sm text-muted-foreground">Resume Subscription</Label>
-                      <p className="mt-1 font-medium">
-                        {profile.subscription_type.resume_subscription 
-                          ? `$${profile.subscription_type.resume_subscription}`
-                          : 'Not set'}
-                      </p>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="resumeSubscription">Resume Subscription</Label>
+                      <Select
+                        value={profile.subscriptions.subscription_type.resume_subscription || ''}
+                        onValueChange={(value) =>
+                          setProfile({
+                            ...profile,
+                            subscriptions: {
+                              ...profile.subscriptions!,
+                              subscription_type: {
+                                ...profile.subscriptions!.subscription_type!,
+                                resume_subscription: value,
+                              },
+                            },
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0.00">Free ($0.00)</SelectItem>
+                          <SelectItem value="2.99">Basic ($2.99)</SelectItem>
+                          <SelectItem value="3.99">Plus ($3.99)</SelectItem>
+                          <SelectItem value="5.99">Premium ($5.99)</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div className="rounded-lg border p-4">
-                      <Label className="text-sm text-muted-foreground">Job Subscription</Label>
-                      <p className="mt-1 font-medium">
-                        {profile.subscription_type.job_subscription 
-                          ? `$${profile.subscription_type.job_subscription}`
-                          : 'Not set'}
-                      </p>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="jobSubscription">Job Subscription</Label>
+                      <Select
+                        value={profile.subscriptions.subscription_type.job_subscription || ''}
+                        onValueChange={(value) =>
+                          setProfile({
+                            ...profile,
+                            subscriptions: {
+                              ...profile.subscriptions!,
+                              subscription_type: {
+                                ...profile.subscriptions!.subscription_type!,
+                                job_subscription: value,
+                              },
+                            },
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0.00">Free ($0.00)</SelectItem>
+                          <SelectItem value="6.99">Basic ($6.99)</SelectItem>
+                          <SelectItem value="15.99">Plus ($15.99)</SelectItem>
+                          <SelectItem value="29.99">Premium ($29.99)</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div className="rounded-lg border p-4">
-                      <Label className="text-sm text-muted-foreground">Cover Letter Subscription</Label>
-                      <p className="mt-1 font-medium">
-                        {profile.subscription_type.cover_letter_subscription 
-                          ? `$${profile.subscription_type.cover_letter_subscription}`
-                          : 'Not set'}
-                      </p>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="coverLetterSubscription">Cover Letter Subscription</Label>
+                      <Select
+                        value={profile.subscriptions.subscription_type.cover_letter_subscription || ''}
+                        onValueChange={(value) =>
+                          setProfile({
+                            ...profile,
+                            subscriptions: {
+                              ...profile.subscriptions!,
+                              subscription_type: {
+                                ...profile.subscriptions!.subscription_type!,
+                                cover_letter_subscription: value,
+                              },
+                            },
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0.00">Free ($0.00)</SelectItem>
+                          <SelectItem value="2.99">Premium ($2.99)</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
-                </div>
+
+                  <Button type="submit" disabled={savingSubscription}>
+                    {savingSubscription ? 'Saving...' : 'Update Subscription'}
+                  </Button>
+                </form>
               ) : (
                 <p className="py-4 text-center text-muted-foreground">
-                  No subscription plan selected
+                  No subscription plan found
                 </p>
               )}
             </CardContent>

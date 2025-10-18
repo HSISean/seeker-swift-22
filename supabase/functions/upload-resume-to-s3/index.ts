@@ -170,12 +170,16 @@ Deno.serve(async (req) => {
 
     console.log(`Successfully uploaded resume to S3: ${s3Url}`);
 
-    // Update profile with S3 URL and key
+    // Calculate enhanced resume folder
+    const enhancedResumeFolder = s3Url.replace('original_resume', 'enhanced_resume');
+
+    // Update profile with S3 URL, key, and enhanced folder
     const { error: updateError } = await supabaseClient
       .from('profiles')
       .update({
-        resume_url: s3Url,
+        resume_folder: s3Url,
         resume_key: key,
+        enhanced_resume_folder: enhancedResumeFolder,
       })
       .eq('id', user.id);
 
@@ -187,8 +191,9 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        url: s3Url,
-        key: key,
+        s3_url: s3Url,
+        s3_key: key,
+        enhanced_folder: enhancedResumeFolder,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

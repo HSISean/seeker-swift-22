@@ -429,14 +429,7 @@ const Profile = () => {
 
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Subscription Plan</CardTitle>
-                {subscriptionStatus?.subscribed && (
-                  <Button variant="outline" size="sm" onClick={handleManageSubscription}>
-                    Manage Subscription
-                  </Button>
-                )}
-              </div>
+              <CardTitle>Subscription Plan</CardTitle>
             </CardHeader>
             <CardContent>
               {profile?.subscriptions?.is_trial && (
@@ -448,19 +441,67 @@ const Profile = () => {
                 </div>
               )}
 
-              {subscriptionStatus?.subscribed && (
-                <div className="rounded-lg border-2 border-primary bg-primary/5 p-4 mb-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 className="h-5 w-5 text-primary" />
-                    <p className="font-medium text-primary">Active Subscription</p>
+              {subscriptionStatus?.subscribed && (() => {
+                const currentPlan = subscriptionTypes.find(
+                  t => t.stripe_product_id === subscriptionStatus.product_id
+                );
+                const totalPrice = currentPlan ? 
+                  parseFloat(currentPlan.job_subscription || '0') + 
+                  parseFloat(currentPlan.cover_letter_subscription || '0') + 
+                  parseFloat(currentPlan.resume_subscription || '0') : 0;
+
+                return (
+                  <div className="rounded-lg border-2 border-primary bg-primary/5 p-6 mb-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-primary" />
+                        <p className="font-semibold text-lg text-primary">Current Subscription</p>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={handleManageSubscription}>
+                        Manage
+                      </Button>
+                    </div>
+                    
+                    {currentPlan && (
+                      <div className="space-y-3">
+                        <div>
+                          <p className="font-medium text-xl capitalize">
+                            {currentPlan.interest_level?.replace(/_/g, ' ')} Plan
+                          </p>
+                          <p className="text-2xl font-bold text-primary mt-1">
+                            ${totalPrice.toFixed(2)}<span className="text-base font-normal text-muted-foreground">/month</span>
+                          </p>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-2 pt-3 border-t">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Job Search</p>
+                            <p className="font-medium">${currentPlan.job_subscription}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Resume Tools</p>
+                            <p className="font-medium">${currentPlan.resume_subscription}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Cover Letters</p>
+                            <p className="font-medium">${currentPlan.cover_letter_subscription}</p>
+                          </div>
+                        </div>
+                        
+                        {subscriptionStatus.subscription_end && (
+                          <p className="text-sm text-muted-foreground pt-2 border-t">
+                            Renews on: {new Date(subscriptionStatus.subscription_end).toLocaleDateString('en-US', {
+                              month: 'long',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  {subscriptionStatus.subscription_end && (
-                    <p className="text-sm text-muted-foreground">
-                      Renews on: {new Date(subscriptionStatus.subscription_end).toLocaleDateString()}
-                    </p>
-                  )}
-                </div>
-              )}
+                );
+              })()}
 
               <div className="space-y-4">
                 <div className="space-y-2">

@@ -57,18 +57,23 @@ const SignUp = () => {
 
       if (error) throw error;
 
-      // Get user and upload resume to S3
+      // Get user session and upload resume to S3
+      const { data: { session } } = await supabase.auth.getSession();
       const { data: { user } } = await supabase.auth.getUser();
+      
       if (user) {
         // Create FormData for edge function
         const formDataToSend = new FormData();
         formDataToSend.append('file', resumeFile);
 
-        // Upload resume to S3 via edge function
+        // Upload resume to S3 via edge function with authorization
         const { data: uploadData, error: uploadError } = await supabase.functions.invoke(
           'upload-resume-to-s3',
           {
             body: formDataToSend,
+            headers: {
+              Authorization: `Bearer ${session?.access_token}`,
+            },
           }
         );
 
@@ -77,14 +82,25 @@ const SignUp = () => {
           throw new Error('Failed to upload resume to storage');
         }
 
-        // Update profile with additional job info
+        if (!uploadData?.success) {
+          throw new Error(uploadData?.error || 'Failed to upload resume');
+        }
+
+        // Calculate enhanced resume folder by replacing "original_resume" with "enhanced_resume"
+        const enhancedResumeFolder = uploadData.s3_url.replace('original_resume', 'enhanced_resume');
+
+        // Update profile with job info and resume data
         await supabase
           .from('profiles')
           .update({
             job_title: formData.jobTitle,
+            job_titles: [formData.jobTitle],
             location: formData.location,
             salary_min: parseInt(formData.salaryMin) || null,
             salary_max: parseInt(formData.salaryMax) || null,
+            resume_folder: uploadData.s3_url,
+            resume_key: uploadData.s3_key,
+            enhanced_resume_folder: enhancedResumeFolder,
           })
           .eq('id', user.id);
 

@@ -34,7 +34,7 @@ interface Profile {
   location: string;
   salary_min: number;
   salary_max: number;
-  resume_url: string;
+  resume_folder: string;
   subscriptions?: Subscription | null;
 }
 
@@ -186,7 +186,7 @@ const Profile = () => {
       if (error) throw error;
       if (!data.success) throw new Error(data.error || 'Upload failed');
 
-      setProfile({ ...profile!, resume_url: data.url });
+      setProfile({ ...profile!, resume_folder: data.s3_url });
       toast.success('Resume uploaded successfully to S3!');
       
       // Refresh profile to get updated data
@@ -448,14 +448,14 @@ const Profile = () => {
               <CardTitle>Resume</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {profile?.resume_url ? (
+              {profile?.resume_folder ? (
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="flex items-center gap-3">
                     <FileText className="h-8 w-8 text-primary" />
                     <div>
                       <p className="font-medium">Resume uploaded</p>
                       <a
-                        href={profile.resume_url}
+                        href={profile.resume_folder}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm text-primary hover:underline"

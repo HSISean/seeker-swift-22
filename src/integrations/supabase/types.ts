@@ -236,7 +236,6 @@ export type Database = {
           resume_downloads_reset_at: string | null
           resume_folder: string | null
           resume_key: string | null
-          resume_url: string | null
           salary_max: number | null
           salary_min: number | null
           subscriptions: string | null
@@ -264,7 +263,6 @@ export type Database = {
           resume_downloads_reset_at?: string | null
           resume_folder?: string | null
           resume_key?: string | null
-          resume_url?: string | null
           salary_max?: number | null
           salary_min?: number | null
           subscriptions?: string | null
@@ -292,7 +290,6 @@ export type Database = {
           resume_downloads_reset_at?: string | null
           resume_folder?: string | null
           resume_key?: string | null
-          resume_url?: string | null
           salary_max?: number | null
           salary_min?: number | null
           subscriptions?: string | null

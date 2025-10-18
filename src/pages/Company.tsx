@@ -23,7 +23,6 @@ interface Job {
   description: string;
   location: string;
   salary: string;
-  employment_type: string;
   match_rating?: number;
 }
 
@@ -240,9 +239,6 @@ const Company = () => {
                         </CardDescription>
                       </div>
                       <div className="flex gap-2">
-                        {job.employment_type && (
-                          <Badge variant="secondary">{job.employment_type}</Badge>
-                        )}
                         {applications.has(job.id) && (
                           <Badge className="bg-primary/10 text-primary">
                             <CheckCircle2 className="mr-1 h-3 w-3" />

@@ -15,8 +15,6 @@ interface Job {
   description: string;
   location: string;
   salary: string;
-  employment_type: string;
-  requirements: string[];
   company_name: string;
   company_logo_url?: string;
   company_link?: string;
@@ -272,9 +270,6 @@ const JobDetails = () => {
                     )}
                   </div>
                 </div>
-                {job.employment_type && (
-                  <Badge variant="secondary">{job.employment_type}</Badge>
-                )}
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -298,20 +293,6 @@ const JobDetails = () => {
                   </Button>
                 )}
               </div>
-
-              {job.requirements && job.requirements.length > 0 && (
-                <div>
-                  <h3 className="mb-2 text-lg font-semibold">Requirements</h3>
-                  <ul className="space-y-2">
-                    {job.requirements.map((req, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" />
-                        <span className="text-muted-foreground">{req}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
 
               <div className="flex gap-4">
                 {hasApplied ? (

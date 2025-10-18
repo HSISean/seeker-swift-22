@@ -18,11 +18,18 @@ const SignUp = () => {
     salaryMin: '',
     salaryMax: '',
   });
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!resumeFile) {
+      toast.error('Please upload your resume');
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -39,9 +46,27 @@ const SignUp = () => {
 
       if (error) throw error;
 
-      // Update profile with additional info
+      // Get user and upload resume
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        // Upload resume to storage
+        const fileExt = resumeFile.name.split('.').pop();
+        const fileName = `${user.id}/resume.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('resumes')
+          .upload(fileName, resumeFile, {
+            upsert: true,
+          });
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('resumes')
+          .getPublicUrl(fileName);
+
+        // Update profile with additional info and resume
         await supabase
           .from('profiles')
           .update({
@@ -49,6 +74,8 @@ const SignUp = () => {
             location: formData.location,
             salary_min: parseInt(formData.salaryMin) || null,
             salary_max: parseInt(formData.salaryMax) || null,
+            resume_url: publicUrl,
+            resume_key: fileName,
           })
           .eq('id', user.id);
       }
@@ -146,6 +173,19 @@ const SignUp = () => {
                   onChange={(e) => setFormData({ ...formData, salaryMax: e.target.value })}
                 />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="resume">Resume *</Label>
+              <Input
+                id="resume"
+                type="file"
+                accept=".pdf,.doc,.docx"
+                onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Accepted formats: PDF, DOC, DOCX
+              </p>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Creating account...' : 'Sign Up'}

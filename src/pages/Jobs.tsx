@@ -21,7 +21,6 @@ interface Job {
   description: string;
   location: string;
   salary: string;
-  employment_type: string;
   company_name: string;
   company_logo_url?: string;
   match_rating?: number;
@@ -276,9 +275,6 @@ const Jobs = () => {
                           )}
                         </CardDescription>
                       </div>
-                      {job.employment_type && (
-                        <Badge variant="secondary">{job.employment_type}</Badge>
-                      )}
                     </div>
                   </CardHeader>
                   <CardContent>

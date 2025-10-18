@@ -8,9 +8,8 @@ interface LocationAutocompleteProps {
   required?: boolean;
 }
 
-// Add your Google Places API key here
-// Get it from: https://console.cloud.google.com/google/maps-apis/credentials
-const GOOGLE_MAPS_API_KEY = "AIzaSyDFDstd6PpG8oQO2nSswKfddYsOcf3OzcY";
+// Google Places API key is loaded from environment variables
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 const LocationAutocomplete = ({ value, onChange, required }: LocationAutocompleteProps) => {
   const inputRef = useRef<HTMLInputElement>(null);

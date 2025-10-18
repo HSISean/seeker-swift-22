@@ -66,12 +66,6 @@ export const loadGoogleMapsScript = () => {
       return;
     }
 
-    if (GOOGLE_MAPS_API_KEY === "YOUR_GOOGLE_PLACES_API_KEY") {
-      toast.error("Google Places API key not configured");
-      reject(new Error("API key not configured"));
-      return;
-    }
-
     const script = document.createElement("script");
     script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
     script.async = true;

@@ -536,7 +536,23 @@ const Profile = () => {
                     disabled={checkingOut}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a subscription plan" />
+                      <SelectValue placeholder="Select a subscription plan">
+                        {subscriptionStatus?.product_id && (() => {
+                          const currentPlan = subscriptionTypes.find(
+                            t => t.stripe_product_id === subscriptionStatus.product_id
+                          );
+                          if (currentPlan) {
+                            const totalPrice = parseFloat(currentPlan.job_subscription || '0') + 
+                                             parseFloat(currentPlan.cover_letter_subscription || '0') + 
+                                             parseFloat(currentPlan.resume_subscription || '0');
+                            return (
+                              <span className="capitalize">
+                                {currentPlan.interest_level?.replace(/_/g, ' ')} - ${totalPrice.toFixed(2)}/mo
+                              </span>
+                            );
+                          }
+                        })()}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent className="bg-background z-50">
                       {subscriptionTypes.map((type) => {

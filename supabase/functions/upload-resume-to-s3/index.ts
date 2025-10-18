@@ -32,9 +32,10 @@ async function uploadToS3(
     '',
     `content-type:${contentType}`,
     `host:${bucket}.s3.${region}.amazonaws.com`,
+    `x-amz-content-sha256:${payloadHash}`,
     `x-amz-date:${date}`,
     '',
-    'content-type;host;x-amz-date',
+    'content-type;host;x-amz-content-sha256;x-amz-date',
     payloadHash
   ].join('\n');
   
@@ -78,13 +79,14 @@ async function uploadToS3(
     .map(b => b.toString(16).padStart(2, '0'))
     .join('');
   
-  const authorization = `${algorithm} Credential=${accessKeyId}/${credentialScope}, SignedHeaders=content-type;host;x-amz-date, Signature=${signatureHex}`;
+  const authorization = `${algorithm} Credential=${accessKeyId}/${credentialScope}, SignedHeaders=content-type;host;x-amz-content-sha256;x-amz-date, Signature=${signatureHex}`;
   
   const response = await fetch(url, {
     method: 'PUT',
     headers: {
       'Host': `${bucket}.s3.${region}.amazonaws.com`,
       'x-amz-date': date,
+      'x-amz-content-sha256': payloadHash,
       'Content-Type': contentType,
       'Authorization': authorization,
     },

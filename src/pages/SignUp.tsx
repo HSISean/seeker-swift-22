@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Briefcase } from 'lucide-react';
-import LocationAutocomplete, { loadGoogleMapsScript } from '@/components/LocationAutocomplete';
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
@@ -21,17 +20,7 @@ const SignUp = () => {
   });
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [mapsLoaded, setMapsLoaded] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    loadGoogleMapsScript()
-      .then(() => setMapsLoaded(true))
-      .catch((error) => {
-        console.error('Failed to load Google Maps:', error);
-        toast.error('Location autocomplete unavailable');
-      });
-  }, []);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,27 +46,27 @@ const SignUp = () => {
 
       if (error) throw error;
 
-      // Get user and upload resume to S3
+      // Get user and upload resume
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        // Create FormData for edge function
-        const formDataToSend = new FormData();
-        formDataToSend.append('file', resumeFile);
+        // Upload resume to storage
+        const fileExt = resumeFile.name.split('.').pop();
+        const fileName = `${user.id}/resume.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('resumes')
+          .upload(fileName, resumeFile, {
+            upsert: true,
+          });
 
-        // Upload resume to S3 via edge function
-        const { data: uploadData, error: uploadError } = await supabase.functions.invoke(
-          'upload-resume-to-s3',
-          {
-            body: formDataToSend,
-          }
-        );
+        if (uploadError) throw uploadError;
 
-        if (uploadError) {
-          console.error('S3 upload error:', uploadError);
-          throw new Error('Failed to upload resume to storage');
-        }
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('resumes')
+          .getPublicUrl(fileName);
 
-        // Update profile with additional job info
+        // Update profile with additional info and resume
         await supabase
           .from('profiles')
           .update({
@@ -85,28 +74,16 @@ const SignUp = () => {
             location: formData.location,
             salary_min: parseInt(formData.salaryMin) || null,
             salary_max: parseInt(formData.salaryMax) || null,
+            resume_url: publicUrl,
+            resume_key: fileName,
           })
           .eq('id', user.id);
-
-        console.log('Resume uploaded to S3:', uploadData);
       }
 
       toast.success('Account created successfully!');
       navigate('/home');
     } catch (error: any) {
-      const errorMessage = error.message || 'Failed to sign up';
-      
-      // Handle "user already exists" errors with helpful message
-      if (errorMessage.includes('already registered') || errorMessage.includes('User already registered')) {
-        toast.error('This email is already registered. Please sign in or use a different email.', {
-          action: {
-            label: 'Sign In',
-            onClick: () => navigate('/signin')
-          }
-        });
-      } else {
-        toast.error(errorMessage);
-      }
+      toast.error(error.message || 'Failed to sign up');
     } finally {
       setLoading(false);
     }
@@ -167,22 +144,13 @@ const SignUp = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="location">Location</Label>
-              {mapsLoaded ? (
-                <LocationAutocomplete
-                  value={formData.location}
-                  onChange={(value) => setFormData({ ...formData, location: value })}
-                  required
-                />
-              ) : (
-                <Input
-                  id="location"
-                  placeholder="Loading location search..."
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  required
-                  disabled
-                />
-              )}
+              <Input
+                id="location"
+                placeholder="e.g., New York, NY"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                required
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

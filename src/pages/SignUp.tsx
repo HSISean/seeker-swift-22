@@ -94,7 +94,19 @@ const SignUp = () => {
       toast.success('Account created successfully!');
       navigate('/home');
     } catch (error: any) {
-      toast.error(error.message || 'Failed to sign up');
+      const errorMessage = error.message || 'Failed to sign up';
+      
+      // Handle "user already exists" errors with helpful message
+      if (errorMessage.includes('already registered') || errorMessage.includes('User already registered')) {
+        toast.error('This email is already registered. Please sign in or use a different email.', {
+          action: {
+            label: 'Sign In',
+            onClick: () => navigate('/signin')
+          }
+        });
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }

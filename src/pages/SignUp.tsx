@@ -57,27 +57,27 @@ const SignUp = () => {
 
       if (error) throw error;
 
-      // Get user and upload resume
+      // Get user and upload resume to S3
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        // Upload resume to storage
-        const fileExt = resumeFile.name.split('.').pop();
-        const fileName = `${user.id}/resume.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('resumes')
-          .upload(fileName, resumeFile, {
-            upsert: true,
-          });
+        // Create FormData for edge function
+        const formDataToSend = new FormData();
+        formDataToSend.append('file', resumeFile);
 
-        if (uploadError) throw uploadError;
+        // Upload resume to S3 via edge function
+        const { data: uploadData, error: uploadError } = await supabase.functions.invoke(
+          'upload-resume-to-s3',
+          {
+            body: formDataToSend,
+          }
+        );
 
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('resumes')
-          .getPublicUrl(fileName);
+        if (uploadError) {
+          console.error('S3 upload error:', uploadError);
+          throw new Error('Failed to upload resume to storage');
+        }
 
-        // Update profile with additional info and resume
+        // Update profile with additional job info
         await supabase
           .from('profiles')
           .update({
@@ -85,10 +85,10 @@ const SignUp = () => {
             location: formData.location,
             salary_min: parseInt(formData.salaryMin) || null,
             salary_max: parseInt(formData.salaryMax) || null,
-            resume_url: publicUrl,
-            resume_key: fileName,
           })
           .eq('id', user.id);
+
+        console.log('Resume uploaded to S3:', uploadData);
       }
 
       toast.success('Account created successfully!');

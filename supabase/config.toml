@@ -1,1 +1,4 @@
 project_id = "urkwkjnmercbpeinqmba"
+
+[functions.insert-job-n8n]
+verify_jwt = false

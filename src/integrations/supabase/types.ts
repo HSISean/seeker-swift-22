@@ -122,6 +122,7 @@ export type Database = {
           salary: string | null
           title: string
           user_profile_id: string | null
+          uuid: string | null
         }
         Insert: {
           company_link?: string | null
@@ -143,6 +144,7 @@ export type Database = {
           salary?: string | null
           title: string
           user_profile_id?: string | null
+          uuid?: string | null
         }
         Update: {
           company_link?: string | null
@@ -164,6 +166,7 @@ export type Database = {
           salary?: string | null
           title?: string
           user_profile_id?: string | null
+          uuid?: string | null
         }
         Relationships: [
           {
@@ -402,7 +405,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_uuid: {
+        Args: { _user_id: string }
+        Returns: string
+      }
     }
     Enums: {
       cover_letter_subscription_enum: "0.00" | "2.99" | "0.99" | "1.99"

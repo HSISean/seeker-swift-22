@@ -17,6 +17,8 @@ interface SubscriptionType {
   resume_subscription: string | null;
   job_subscription: string | null;
   cover_letter_subscription: string | null;
+  stripe_price_id?: string | null;
+  stripe_product_id?: string | null;
 }
 
 interface Subscription {
@@ -52,7 +54,7 @@ interface Application {
 }
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, subscriptionStatus, checkSubscription } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
@@ -61,6 +63,7 @@ const Profile = () => {
   const [uploading, setUploading] = useState(false);
   const [savingSubscription, setSavingSubscription] = useState(false);
   const [subscriptionTypes, setSubscriptionTypes] = useState<SubscriptionType[]>([]);
+  const [checkingOut, setCheckingOut] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -98,6 +101,8 @@ const Profile = () => {
             interest_level,
             resume_subscription,
             job_subscription,
+            stripe_price_id,
+            stripe_product_id,
             cover_letter_subscription
           )
         `)
@@ -123,7 +128,8 @@ const Profile = () => {
     try {
       const { data, error } = await supabase
         .from('subscription_type')
-        .select('*');
+        .select('*')
+        .order('job_subscription', { ascending: true });
 
       if (error) throw error;
       setSubscriptionTypes(data || []);
@@ -248,6 +254,47 @@ const Profile = () => {
       toast.error(error.message || 'Failed to update subscription');
     } finally {
       setSavingSubscription(false);
+    }
+  };
+
+  const handleCheckout = async (priceId: string) => {
+    if (!user) return;
+    
+    setCheckingOut(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { priceId },
+      });
+      
+      if (error) throw error;
+      
+      if (data?.url) {
+        window.open(data.url, '_blank');
+        toast.success('Opening Stripe checkout...');
+      }
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      toast.error('Failed to start checkout process');
+    } finally {
+      setCheckingOut(false);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal');
+      
+      if (error) throw error;
+      
+      if (data?.url) {
+        window.open(data.url, '_blank');
+        toast.success('Opening subscription management portal...');
+      }
+    } catch (error) {
+      console.error('Error opening customer portal:', error);
+      toast.error('Failed to open subscription management');
     }
   };
 
@@ -382,106 +429,99 @@ const Profile = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Subscription Plan</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {profile?.subscriptions?.subscription_type ? (
-                <form onSubmit={handleSaveSubscription} className="space-y-6">
-                  {profile.subscriptions.is_trial && (
-                    <div className="rounded-lg bg-primary/10 p-4">
-                      <p className="text-sm font-medium">
-                        🎉 You're on a free trial! Trial ends:{' '}
-                        {new Date(profile.subscriptions.trial_ends_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  )}
-                  
-                  <div className="grid gap-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label>Subscription Plan</Label>
-                        {profile.created_at && (
-                          <span className="text-sm text-muted-foreground">
-                            Next payment: {(() => {
-                              const createdDate = new Date(profile.created_at);
-                              const now = new Date();
-                              const fourthDayAfterSignup = new Date(createdDate);
-                              fourthDayAfterSignup.setDate(createdDate.getDate() + 4);
-                              
-                              // If we haven't reached the 4th day after signup yet
-                              if (now < fourthDayAfterSignup) {
-                                return fourthDayAfterSignup.toLocaleDateString();
-                              }
-                              
-                              // Otherwise, show the 1st of next month
-                              const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-                              return nextMonth.toLocaleDateString();
-                            })()}
-                          </span>
-                        )}
-                      </div>
-                      <Select
-                        value={profile.subscriptions.subscription_type.job_subscription || ''}
-                        onValueChange={(value) => {
-                          const selectedType = subscriptionTypes.find(t => t.job_subscription === value);
-                          if (selectedType) {
-                            setProfile({
-                              ...profile,
-                              subscriptions: {
-                                ...profile.subscriptions!,
-                                subscription_type: selectedType,
-                              },
-                            });
-                          }
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0.00">
-                            <div className="flex flex-col">
-                              <span className="font-medium">Free Trial</span>
-                              <span className="text-xs text-muted-foreground">Match: All jobs | Resume: Free | Cover Letter: Free</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="4.99">
-                            <div className="flex flex-col">
-                              <span className="font-medium">Free - $4.99/mo</span>
-                              <span className="text-xs text-muted-foreground">Match: All jobs | Resume: Free | Cover Letter: Free</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="9.99">
-                            <div className="flex flex-col">
-                              <span className="font-medium">Basic - $9.99/mo</span>
-                              <span className="text-xs text-muted-foreground">Match: 70%+ | Resume: $2.99 | Cover Letter: $0.99</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="19.99">
-                            <div className="flex flex-col">
-                              <span className="font-medium">Plus - $19.99/mo</span>
-                              <span className="text-xs text-muted-foreground">Match: 75%+ | Resume: $3.99 | Cover Letter: $1.99</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="29.99">
-                            <div className="flex flex-col">
-                              <span className="font-medium">Premium - $29.99/mo</span>
-                              <span className="text-xs text-muted-foreground">Match: 85%+ | Resume: $5.99 | Cover Letter: $2.99</span>
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <Button type="submit" disabled={savingSubscription}>
-                    {savingSubscription ? 'Saving...' : 'Update Subscription'}
+              <div className="flex items-center justify-between">
+                <CardTitle>Subscription Plan</CardTitle>
+                {subscriptionStatus?.subscribed && (
+                  <Button variant="outline" size="sm" onClick={handleManageSubscription}>
+                    Manage Subscription
                   </Button>
-                </form>
-              ) : (
-                <p className="py-4 text-center text-muted-foreground">
-                  No subscription plan found
-                </p>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {profile?.subscriptions?.is_trial && (
+                <div className="rounded-lg bg-primary/10 p-4">
+                  <p className="text-sm font-medium">
+                    🎉 You're on a free trial! Trial ends:{' '}
+                    {new Date(profile.subscriptions.trial_ends_at).toLocaleDateString()}
+                  </p>
+                </div>
+              )}
+
+              {subscriptionStatus?.subscribed && (
+                <div className="rounded-lg border-2 border-primary bg-primary/5 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckCircle2 className="h-5 w-5 text-primary" />
+                    <p className="font-medium text-primary">Active Subscription</p>
+                  </div>
+                  {subscriptionStatus.subscription_end && (
+                    <p className="text-sm text-muted-foreground">
+                      Renews on: {new Date(subscriptionStatus.subscription_end).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <Label>Choose Your Plan</Label>
+                <div className="grid gap-4">
+                  {subscriptionTypes.map((type) => {
+                    const isCurrentPlan = subscriptionStatus?.product_id === type.stripe_product_id;
+                    const totalPrice = parseFloat(type.job_subscription || '0') + 
+                                     parseFloat(type.cover_letter_subscription || '0') + 
+                                     parseFloat(type.resume_subscription || '0');
+                    
+                    return (
+                      <div 
+                        key={type.id} 
+                        className={`rounded-lg border-2 p-4 ${isCurrentPlan ? 'border-primary bg-primary/5' : 'border-border'}`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-semibold capitalize">
+                                {type.interest_level?.replace(/_/g, ' ')}
+                              </h3>
+                              {isCurrentPlan && (
+                                <span className="px-2 py-1 text-xs font-medium rounded-full bg-primary text-primary-foreground">
+                                  Current Plan
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-2xl font-bold mb-2">
+                              ${totalPrice.toFixed(2)}<span className="text-sm font-normal text-muted-foreground">/month</span>
+                            </p>
+                            <ul className="space-y-1 text-sm text-muted-foreground">
+                              <li>• Job subscription: ${type.job_subscription}</li>
+                              <li>• Resume: ${type.resume_subscription}</li>
+                              <li>• Cover Letter: ${type.cover_letter_subscription}</li>
+                            </ul>
+                          </div>
+                          {!isCurrentPlan && type.stripe_price_id && (
+                            <Button 
+                              onClick={() => handleCheckout(type.stripe_price_id!)}
+                              disabled={checkingOut}
+                              size="sm"
+                            >
+                              {checkingOut ? 'Processing...' : 'Subscribe'}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {profile?.created_at && !subscriptionStatus?.subscribed && (
+                <div className="text-sm text-muted-foreground">
+                  First payment due: {(() => {
+                    const createdDate = new Date(profile.created_at);
+                    const fourthDayAfterSignup = new Date(createdDate);
+                    fourthDayAfterSignup.setDate(createdDate.getDate() + 4);
+                    return fourthDayAfterSignup.toLocaleDateString();
+                  })()}
+                </div>
               )}
             </CardContent>
           </Card>

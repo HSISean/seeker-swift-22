@@ -327,6 +327,8 @@ export type Database = {
           resume_subscription:
             | Database["public"]["Enums"]["resume_subscription_enum"]
             | null
+          stripe_price_id: string | null
+          stripe_product_id: string | null
         }
         Insert: {
           cover_letter_subscription?:
@@ -343,6 +345,8 @@ export type Database = {
           resume_subscription?:
             | Database["public"]["Enums"]["resume_subscription_enum"]
             | null
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
         }
         Update: {
           cover_letter_subscription?:
@@ -359,6 +363,8 @@ export type Database = {
           resume_subscription?:
             | Database["public"]["Enums"]["resume_subscription_enum"]
             | null
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
         }
         Relationships: []
       }

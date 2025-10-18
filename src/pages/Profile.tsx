@@ -38,6 +38,7 @@ interface Profile {
   resume_folder: string;
   subscriptions?: Subscription | null;
   next_billing_month?: string | null;
+  created_at?: string;
 }
 
 interface Application {
@@ -397,7 +398,28 @@ const Profile = () => {
                   
                   <div className="grid gap-4">
                     <div className="space-y-2">
-                      <Label>Subscription Plan</Label>
+                      <div className="flex items-center justify-between">
+                        <Label>Subscription Plan</Label>
+                        {profile.created_at && (
+                          <span className="text-sm text-muted-foreground">
+                            Next payment: {(() => {
+                              const createdDate = new Date(profile.created_at);
+                              const now = new Date();
+                              const fourthDayAfterSignup = new Date(createdDate);
+                              fourthDayAfterSignup.setDate(createdDate.getDate() + 4);
+                              
+                              // If we haven't reached the 4th day after signup yet
+                              if (now < fourthDayAfterSignup) {
+                                return fourthDayAfterSignup.toLocaleDateString();
+                              }
+                              
+                              // Otherwise, show the 1st of next month
+                              const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+                              return nextMonth.toLocaleDateString();
+                            })()}
+                          </span>
+                        )}
+                      </div>
                       <Select
                         value={profile.subscriptions.subscription_type.job_subscription || ''}
                         onValueChange={(value) => {

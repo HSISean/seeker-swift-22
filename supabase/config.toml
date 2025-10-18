@@ -1,4 +1,7 @@
 project_id = "urkwkjnmercbpeinqmba"
 
+[functions.check-subscription]
+verify_jwt = false
+
 [functions.insert-job-n8n]
 verify_jwt = false

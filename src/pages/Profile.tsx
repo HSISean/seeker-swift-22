@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Upload, FileText, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import LocationAutocomplete, { loadGoogleMapsScript } from '@/components/LocationAutocomplete';
 
 interface SubscriptionType {
   id?: string;
@@ -66,6 +67,12 @@ const Profile = () => {
       fetchSubscriptionTypes();
     }
   }, [user]);
+
+  useEffect(() => {
+    loadGoogleMapsScript().catch((error) => {
+      console.error('Failed to load Google Maps:', error);
+    });
+  }, []);
 
   const fetchProfile = async () => {
     try {
@@ -315,11 +322,10 @@ const Profile = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
+                  <LocationAutocomplete
                     value={profile?.location || ''}
-                    onChange={(e) =>
-                      setProfile({ ...profile!, location: e.target.value })
+                    onChange={(value) =>
+                      setProfile({ ...profile!, location: value })
                     }
                   />
                 </div>

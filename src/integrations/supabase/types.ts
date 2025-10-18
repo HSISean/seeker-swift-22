@@ -460,6 +460,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: string
       }
+      is_valid_profile_uuid: {
+        Args: { _uuid: string }
+        Returns: boolean
+      }
     }
     Enums: {
       cover_letter_subscription_enum: "0.00" | "2.99" | "0.99" | "1.99"

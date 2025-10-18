@@ -44,7 +44,8 @@ const SignUp = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      // Step 1: Create the user account
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
@@ -55,13 +56,22 @@ const SignUp = () => {
         },
       });
 
-      if (error) throw error;
-
-      // Get user session and upload resume to S3
-      const { data: { session } } = await supabase.auth.getSession();
-      const { data: { user } } = await supabase.auth.getUser();
+      if (signUpError) throw signUpError;
       
-      if (user) {
+      // Ensure user was created
+      if (!signUpData.user) {
+        throw new Error('User account was not created');
+      }
+
+      // Step 2: Get a fresh session to ensure we're authenticated
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        throw new Error('Failed to establish session');
+      }
+      
+      // Step 3: Now upload resume to S3 with authenticated session
+      if (signUpData.user) {
         // Create FormData for edge function
         const formDataToSend = new FormData();
         formDataToSend.append('file', resumeFile);
@@ -102,7 +112,7 @@ const SignUp = () => {
             resume_key: uploadData.s3_key,
             enhanced_resume_folder: enhancedResumeFolder,
           })
-          .eq('id', user.id);
+          .eq('id', signUpData.user.id);
 
         console.log('Resume uploaded to S3:', uploadData);
       }

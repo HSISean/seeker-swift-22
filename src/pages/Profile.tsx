@@ -536,40 +536,18 @@ const Profile = () => {
                     disabled={checkingOut}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a subscription plan">
-                        {subscriptionStatus?.product_id && (() => {
-                          const currentPlan = subscriptionTypes.find(
-                            t => t.stripe_product_id === subscriptionStatus.product_id
-                          );
-                          if (currentPlan) {
-                            const totalPrice = parseFloat(currentPlan.job_subscription || '0') + 
-                                             parseFloat(currentPlan.cover_letter_subscription || '0') + 
-                                             parseFloat(currentPlan.resume_subscription || '0');
-                            return (
-                              <span className="capitalize">
-                                {currentPlan.interest_level?.replace(/_/g, ' ')} - ${totalPrice.toFixed(2)}/mo
-                              </span>
-                            );
-                          }
-                        })()}
-                      </SelectValue>
+                      <SelectValue placeholder="Select a subscription plan" />
                     </SelectTrigger>
                     <SelectContent className="bg-background z-50">
                       {subscriptionTypes.map((type) => {
                         const totalPrice = parseFloat(type.job_subscription || '0') + 
                                          parseFloat(type.cover_letter_subscription || '0') + 
                                          parseFloat(type.resume_subscription || '0');
+                        const displayText = `${type.interest_level?.replace(/_/g, ' ')} - $${totalPrice.toFixed(2)}/mo`;
                         
                         return (
-                          <SelectItem key={type.id} value={type.stripe_product_id || ''}>
-                            <div className="flex flex-col">
-                              <span className="font-medium capitalize">
-                                {type.interest_level?.replace(/_/g, ' ')} - ${totalPrice.toFixed(2)}/mo
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                Jobs: ${type.job_subscription} | Resume: ${type.resume_subscription} | Cover Letter: ${type.cover_letter_subscription}
-                              </span>
-                            </div>
+                          <SelectItem key={type.id} value={type.stripe_product_id || ''} className="capitalize">
+                            {displayText}
                           </SelectItem>
                         );
                       })}

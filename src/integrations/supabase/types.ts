@@ -152,7 +152,7 @@ export type Database = {
           company_logo_url: string | null
           company_name: string | null
           cover_letter_link: string | null
-          description: string
+          description: string | null
           expires_at: string | null
           id: string
           is_active: boolean | null
@@ -165,7 +165,7 @@ export type Database = {
           posted_at: string | null
           resume_link: string | null
           salary: string | null
-          title: string
+          title: string | null
           user_profile_id: string | null
           uuid: string | null
         }
@@ -174,7 +174,7 @@ export type Database = {
           company_logo_url?: string | null
           company_name?: string | null
           cover_letter_link?: string | null
-          description: string
+          description?: string | null
           expires_at?: string | null
           id?: string
           is_active?: boolean | null
@@ -187,7 +187,7 @@ export type Database = {
           posted_at?: string | null
           resume_link?: string | null
           salary?: string | null
-          title: string
+          title?: string | null
           user_profile_id?: string | null
           uuid?: string | null
         }
@@ -196,7 +196,7 @@ export type Database = {
           company_logo_url?: string | null
           company_name?: string | null
           cover_letter_link?: string | null
-          description?: string
+          description?: string | null
           expires_at?: string | null
           id?: string
           is_active?: boolean | null
@@ -209,7 +209,7 @@ export type Database = {
           posted_at?: string | null
           resume_link?: string | null
           salary?: string | null
-          title?: string
+          title?: string | null
           user_profile_id?: string | null
           uuid?: string | null
         }
@@ -459,6 +459,10 @@ export type Database = {
       get_user_uuid: {
         Args: { _user_id: string }
         Returns: string
+      }
+      is_valid_profile_uuid: {
+        Args: { _uuid: string }
+        Returns: boolean
       }
     }
     Enums: {

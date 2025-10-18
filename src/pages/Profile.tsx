@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Upload, FileText, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import LocationAutocomplete, { loadGoogleMapsScript } from '@/components/LocationAutocomplete';
+import { profileSchema, resumeFileSchema } from '@/lib/validations';
 
 interface SubscriptionType {
   id?: string;
@@ -157,6 +158,21 @@ const Profile = () => {
     e.preventDefault();
     if (!profile) return;
 
+    // Validate profile data
+    const validation = profileSchema.safeParse({
+      fullName: profile.full_name,
+      jobTitle: profile.job_title,
+      location: profile.location,
+      salaryMin: profile.salary_min,
+      salaryMax: profile.salary_max,
+    });
+
+    if (!validation.success) {
+      const firstError = validation.error.errors[0];
+      toast.error(firstError.message);
+      return;
+    }
+
     setSaving(true);
     try {
       const { error } = await supabase
@@ -183,6 +199,15 @@ const Profile = () => {
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
+
+    // Validate resume file
+    const fileValidation = resumeFileSchema.safeParse(file);
+    if (!fileValidation.success) {
+      const firstError = fileValidation.error.errors[0];
+      toast.error(firstError.message);
+      e.target.value = ''; // Reset file input
+      return;
+    }
 
     setUploading(true);
     try {

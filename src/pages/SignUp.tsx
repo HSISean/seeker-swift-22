@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Briefcase } from 'lucide-react';
 import LocationAutocomplete, { loadGoogleMapsScript } from '@/components/LocationAutocomplete';
+import { signUpSchema, resumeFileSchema } from '@/lib/validations';
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
@@ -36,8 +37,24 @@ const SignUp = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate form data
+    const formValidation = signUpSchema.safeParse(formData);
+    if (!formValidation.success) {
+      const firstError = formValidation.error.errors[0];
+      toast.error(firstError.message);
+      return;
+    }
+    
+    // Validate resume file
     if (!resumeFile) {
       toast.error('Please upload your resume');
+      return;
+    }
+    
+    const fileValidation = resumeFileSchema.safeParse(resumeFile);
+    if (!fileValidation.success) {
+      const firstError = fileValidation.error.errors[0];
+      toast.error(firstError.message);
       return;
     }
     

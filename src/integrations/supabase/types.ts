@@ -53,6 +53,51 @@ export type Database = {
           },
         ]
       }
+      billing: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          profile_id: string
+          status: string | null
+          subscription_type_id: string | null
+          transaction_date: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          profile_id: string
+          status?: string | null
+          subscription_type_id?: string | null
+          transaction_date?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          profile_id?: string
+          status?: string | null
+          subscription_type_id?: string | null
+          transaction_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_subscription_type_id_fkey"
+            columns: ["subscription_type_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_type"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           created_at: string | null

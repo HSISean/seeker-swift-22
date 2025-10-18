@@ -69,7 +69,33 @@ serve(async (req) => {
       subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
       logStep("Active subscription found", { subscriptionId: subscription.id, endDate: subscriptionEnd });
       productId = subscription.items.data[0].price.product as string;
-      logStep("Determined subscription tier", { productId });
+      const amount = subscription.items.data[0].price.unit_amount ? subscription.items.data[0].price.unit_amount / 100 : 0;
+      logStep("Determined subscription tier", { productId, amount });
+
+      // Get subscription type ID from product ID
+      const { data: subType } = await supabaseClient
+        .from('subscription_type')
+        .select('id')
+        .eq('stripe_product_id', productId)
+        .maybeSingle();
+
+      // Create billing record for active subscription
+      if (subType) {
+        const { error: billingError } = await supabaseClient
+          .from('billing')
+          .insert({
+            profile_id: user.id,
+            amount: amount,
+            subscription_type_id: subType.id,
+            status: 'completed'
+          });
+        
+        if (billingError) {
+          logStep("Error creating billing record", { error: billingError.message });
+        } else {
+          logStep("Billing record created successfully");
+        }
+      }
     } else {
       logStep("No active subscription found");
     }

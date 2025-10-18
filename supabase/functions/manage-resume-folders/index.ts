@@ -146,18 +146,18 @@ Deno.serve(async (req) => {
       throw new Error('Missing AWS credentials');
     }
 
-    // Create main user folder
-    const mainFolder = `${userUuid}/`;
+    // Create main user folder under users/ directory
+    const mainFolder = `users/${userUuid}/`;
     await createS3Folder(bucket, mainFolder, region, accessKeyId, secretAccessKey);
     console.log(`Created main folder: ${mainFolder}`);
 
     // Create original resume subfolder
-    const originalFolder = `${userUuid}/original_resume/`;
+    const originalFolder = `users/${userUuid}/original_resume/`;
     await createS3Folder(bucket, originalFolder, region, accessKeyId, secretAccessKey);
     console.log(`Created original resume folder: ${originalFolder}`);
 
     // Create enhanced resume subfolder
-    const enhancedFolder = `${userUuid}/enhanced_resume/`;
+    const enhancedFolder = `users/${userUuid}/enhanced_resume/`;
     await createS3Folder(bucket, enhancedFolder, region, accessKeyId, secretAccessKey);
     console.log(`Created enhanced resume folder: ${enhancedFolder}`);
 

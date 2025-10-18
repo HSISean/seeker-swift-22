@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
 
     const userUuid = profile.uuid || user.id.slice(0, 10);
     const fileExt = file.name.split('.').pop();
-    const key = `${userUuid}/original_resume/resume.${fileExt}`;
+    const key = `users/${userUuid}/original_resume/resume.${fileExt}`;
     
     const bucket = Deno.env.get('AWS_S3_BUCKET_NAME');
     const region = Deno.env.get('AWS_REGION');

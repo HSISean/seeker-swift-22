@@ -526,7 +526,7 @@ const Profile = () => {
                     )}
                   </div>
                   <Select
-                    value={subscriptionStatus?.product_id || ''}
+                    value={subscriptionStatus?.product_id || profile?.subscriptions?.subscription_type?.stripe_product_id || ''}
                     onValueChange={(productId) => {
                       const selectedType = subscriptionTypes.find(t => t.stripe_product_id === productId);
                       if (selectedType?.stripe_price_id) {

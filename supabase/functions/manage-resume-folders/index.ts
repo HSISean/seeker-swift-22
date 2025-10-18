@@ -156,20 +156,6 @@ Deno.serve(async (req) => {
     await createS3Folder(bucket, enhancedFolder, region, accessKeyId, secretAccessKey);
     console.log(`Created enhanced resume folder: ${enhancedFolder}`);
 
-    // Update profile with folder paths
-    const { error: updateError } = await supabaseClient
-      .from('profiles')
-      .update({
-        resume_folder: originalFolder,
-        enhanced_resume_folder: enhancedFolder,
-      })
-      .eq('id', user.id);
-
-    if (updateError) {
-      console.error('Error updating profile:', updateError);
-      throw updateError;
-    }
-
     return new Response(
       JSON.stringify({
         success: true,

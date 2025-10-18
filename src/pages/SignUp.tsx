@@ -69,8 +69,20 @@ const SignUp = () => {
       if (sessionError || !session) {
         throw new Error('Failed to establish session');
       }
+
+      // Step 3: Create resume folders in S3
+      const { error: folderError } = await supabase.functions.invoke('manage-resume-folders', {
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
+
+      if (folderError) {
+        console.error('Error creating folders:', folderError);
+        throw new Error('Failed to create resume folders');
+      }
       
-      // Step 3: Now upload resume to S3 with authenticated session
+      // Step 4: Now upload resume to S3 with authenticated session
       if (signUpData.user) {
         // Create FormData for edge function
         const formDataToSend = new FormData();
@@ -96,10 +108,7 @@ const SignUp = () => {
           throw new Error(uploadData?.error || 'Failed to upload resume');
         }
 
-        // Calculate enhanced resume folder by replacing "original_resume" with "enhanced_resume"
-        const enhancedResumeFolder = uploadData.s3_url.replace('original_resume', 'enhanced_resume');
-
-        // Update profile with job info and resume data
+        // Update profile with job info (resume data is already updated by upload function)
         await supabase
           .from('profiles')
           .update({
@@ -108,9 +117,6 @@ const SignUp = () => {
             location: formData.location,
             salary_min: parseInt(formData.salaryMin) || null,
             salary_max: parseInt(formData.salaryMax) || null,
-            resume_folder: uploadData.s3_url,
-            resume_key: uploadData.s3_key,
-            enhanced_resume_folder: enhancedResumeFolder,
           })
           .eq('id', signUpData.user.id);
 

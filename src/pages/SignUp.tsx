@@ -8,7 +8,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Briefcase } from 'lucide-react';
 import LocationAutocomplete, { loadGoogleMapsScript } from '@/components/LocationAutocomplete';
-import { signUpSchema, resumeFileSchema } from '@/lib/validations';
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
@@ -37,32 +36,15 @@ const SignUp = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form data
-    const formValidation = signUpSchema.safeParse(formData);
-    if (!formValidation.success) {
-      const firstError = formValidation.error.errors[0];
-      toast.error(firstError.message);
-      return;
-    }
-    
-    // Validate resume file
     if (!resumeFile) {
       toast.error('Please upload your resume');
-      return;
-    }
-    
-    const fileValidation = resumeFileSchema.safeParse(resumeFile);
-    if (!fileValidation.success) {
-      const firstError = fileValidation.error.errors[0];
-      toast.error(firstError.message);
       return;
     }
     
     setLoading(true);
 
     try {
-      // Step 1: Create the user account
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
@@ -73,48 +55,20 @@ const SignUp = () => {
         },
       });
 
-      if (signUpError) throw signUpError;
-      
-      // Ensure user was created
-      if (!signUpData.user) {
-        throw new Error('User account was not created');
-      }
+      if (error) throw error;
 
-      // Step 2: Get a fresh session to ensure we're authenticated
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session) {
-        throw new Error('Failed to establish session');
-      }
-
-      // Step 3: Create resume folders in S3
-      const { data: folderData, error: folderError } = await supabase.functions.invoke('manage-resume-folders', {
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-      });
-
-      console.log('Folder creation response:', folderData, folderError);
-
-      if (folderError) {
-        console.error('Error creating folders:', folderError);
-        throw new Error('Failed to create resume folders');
-      }
-      
-      // Step 4: Now upload resume to S3 with authenticated session
-      if (signUpData.user) {
+      // Get user and upload resume to S3
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
         // Create FormData for edge function
         const formDataToSend = new FormData();
         formDataToSend.append('file', resumeFile);
 
-        // Upload resume to S3 via edge function with authorization
+        // Upload resume to S3 via edge function
         const { data: uploadData, error: uploadError } = await supabase.functions.invoke(
           'upload-resume-to-s3',
           {
             body: formDataToSend,
-            headers: {
-              Authorization: `Bearer ${session?.access_token}`,
-            },
           }
         );
 
@@ -123,21 +77,16 @@ const SignUp = () => {
           throw new Error('Failed to upload resume to storage');
         }
 
-        if (!uploadData?.success) {
-          throw new Error(uploadData?.error || 'Failed to upload resume');
-        }
-
-        // Update profile with job info (resume data is already updated by upload function)
+        // Update profile with additional job info
         await supabase
           .from('profiles')
           .update({
             job_title: formData.jobTitle,
-            job_titles: [formData.jobTitle],
             location: formData.location,
             salary_min: parseInt(formData.salaryMin) || null,
             salary_max: parseInt(formData.salaryMax) || null,
           })
-          .eq('id', signUpData.user.id);
+          .eq('id', user.id);
 
         console.log('Resume uploaded to S3:', uploadData);
       }

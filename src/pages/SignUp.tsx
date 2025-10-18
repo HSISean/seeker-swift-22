@@ -71,11 +71,13 @@ const SignUp = () => {
       }
 
       // Step 3: Create resume folders in S3
-      const { error: folderError } = await supabase.functions.invoke('manage-resume-folders', {
+      const { data: folderData, error: folderError } = await supabase.functions.invoke('manage-resume-folders', {
         headers: {
           Authorization: `Bearer ${session?.access_token}`,
         },
       });
+
+      console.log('Folder creation response:', folderData, folderError);
 
       if (folderError) {
         console.error('Error creating folders:', folderError);

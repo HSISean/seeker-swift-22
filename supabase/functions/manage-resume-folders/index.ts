@@ -21,16 +21,20 @@ async function createS3Folder(bucket: string, folderPath: string, region: string
   const algorithm = 'AWS4-HMAC-SHA256';
   const credentialScope = `${dateStamp}/${region}/s3/aws4_request`;
   
-  // Create canonical request
+  // Empty payload hash for folder creation
+  const payloadHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+  
+  // Create canonical request with x-amz-content-sha256
   const canonicalRequest = [
     'PUT',
     `/${key}`,
     '',
     `host:${bucket}.s3.${region}.amazonaws.com`,
+    `x-amz-content-sha256:${payloadHash}`,
     `x-amz-date:${date}`,
     '',
-    'host;x-amz-date',
-    'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+    'host;x-amz-content-sha256;x-amz-date',
+    payloadHash
   ].join('\n');
   
   // Create string to sign
@@ -78,13 +82,14 @@ async function createS3Folder(bucket: string, folderPath: string, region: string
     .map(b => b.toString(16).padStart(2, '0'))
     .join('');
   
-  const authorization = `${algorithm} Credential=${accessKeyId}/${credentialScope}, SignedHeaders=host;x-amz-date, Signature=${signatureHex}`;
+  const authorization = `${algorithm} Credential=${accessKeyId}/${credentialScope}, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=${signatureHex}`;
   
   const response = await fetch(url, {
     method: 'PUT',
     headers: {
       'Host': `${bucket}.s3.${region}.amazonaws.com`,
       'x-amz-date': date,
+      'x-amz-content-sha256': payloadHash,
       'Authorization': authorization,
     },
   });

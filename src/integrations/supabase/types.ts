@@ -53,6 +53,51 @@ export type Database = {
           },
         ]
       }
+      billing: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          profile_id: string
+          status: string | null
+          subscription_type_id: string | null
+          transaction_date: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          profile_id: string
+          status?: string | null
+          subscription_type_id?: string | null
+          transaction_date?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          profile_id?: string
+          status?: string | null
+          subscription_type_id?: string | null
+          transaction_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_subscription_type_id_fkey"
+            columns: ["subscription_type_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_type"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           created_at: string | null
@@ -122,6 +167,7 @@ export type Database = {
           salary: string | null
           title: string
           user_profile_id: string | null
+          uuid: string | null
         }
         Insert: {
           company_link?: string | null
@@ -143,6 +189,7 @@ export type Database = {
           salary?: string | null
           title: string
           user_profile_id?: string | null
+          uuid?: string | null
         }
         Update: {
           company_link?: string | null
@@ -164,6 +211,7 @@ export type Database = {
           salary?: string | null
           title?: string
           user_profile_id?: string | null
+          uuid?: string | null
         }
         Relationships: [
           {
@@ -236,7 +284,6 @@ export type Database = {
           resume_downloads_reset_at: string | null
           resume_folder: string | null
           resume_key: string | null
-          resume_url: string | null
           salary_max: number | null
           salary_min: number | null
           subscriptions: string | null
@@ -264,7 +311,6 @@ export type Database = {
           resume_downloads_reset_at?: string | null
           resume_folder?: string | null
           resume_key?: string | null
-          resume_url?: string | null
           salary_max?: number | null
           salary_min?: number | null
           subscriptions?: string | null
@@ -292,7 +338,6 @@ export type Database = {
           resume_downloads_reset_at?: string | null
           resume_folder?: string | null
           resume_key?: string | null
-          resume_url?: string | null
           salary_max?: number | null
           salary_min?: number | null
           subscriptions?: string | null
@@ -327,6 +372,8 @@ export type Database = {
           resume_subscription:
             | Database["public"]["Enums"]["resume_subscription_enum"]
             | null
+          stripe_price_id: string | null
+          stripe_product_id: string | null
         }
         Insert: {
           cover_letter_subscription?:
@@ -343,6 +390,8 @@ export type Database = {
           resume_subscription?:
             | Database["public"]["Enums"]["resume_subscription_enum"]
             | null
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
         }
         Update: {
           cover_letter_subscription?:
@@ -359,6 +408,8 @@ export type Database = {
           resume_subscription?:
             | Database["public"]["Enums"]["resume_subscription_enum"]
             | null
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
         }
         Relationships: []
       }
@@ -405,7 +456,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_uuid: {
+        Args: { _user_id: string }
+        Returns: string
+      }
     }
     Enums: {
       cover_letter_subscription_enum: "0.00" | "2.99" | "0.99" | "1.99"

@@ -32,9 +32,10 @@ async function uploadToS3(
     '',
     `content-type:${contentType}`,
     `host:${bucket}.s3.${region}.amazonaws.com`,
+    `x-amz-content-sha256:${payloadHash}`,
     `x-amz-date:${date}`,
     '',
-    'content-type;host;x-amz-date',
+    'content-type;host;x-amz-content-sha256;x-amz-date',
     payloadHash
   ].join('\n');
   
@@ -78,13 +79,14 @@ async function uploadToS3(
     .map(b => b.toString(16).padStart(2, '0'))
     .join('');
   
-  const authorization = `${algorithm} Credential=${accessKeyId}/${credentialScope}, SignedHeaders=content-type;host;x-amz-date, Signature=${signatureHex}`;
+  const authorization = `${algorithm} Credential=${accessKeyId}/${credentialScope}, SignedHeaders=content-type;host;x-amz-content-sha256;x-amz-date, Signature=${signatureHex}`;
   
   const response = await fetch(url, {
     method: 'PUT',
     headers: {
       'Host': `${bucket}.s3.${region}.amazonaws.com`,
       'x-amz-date': date,
+      'x-amz-content-sha256': payloadHash,
       'Content-Type': contentType,
       'Authorization': authorization,
     },
@@ -141,7 +143,7 @@ Deno.serve(async (req) => {
 
     const userUuid = profile.uuid || user.id.slice(0, 10);
     const fileExt = file.name.split('.').pop();
-    const key = `${userUuid}/original_resume/resume.${fileExt}`;
+    const key = `users/${userUuid}/original_resume/resume.${fileExt}`;
     
     const bucket = Deno.env.get('AWS_S3_BUCKET_NAME');
     const region = Deno.env.get('AWS_REGION');
@@ -168,12 +170,16 @@ Deno.serve(async (req) => {
 
     console.log(`Successfully uploaded resume to S3: ${s3Url}`);
 
-    // Update profile with S3 URL and key
+    // Calculate enhanced resume folder
+    const enhancedResumeFolder = s3Url.replace('original_resume', 'enhanced_resume');
+
+    // Update profile with S3 URL, key, and enhanced folder
     const { error: updateError } = await supabaseClient
       .from('profiles')
       .update({
-        resume_url: s3Url,
+        resume_folder: s3Url,
         resume_key: key,
+        enhanced_resume_folder: enhancedResumeFolder,
       })
       .eq('id', user.id);
 
@@ -185,8 +191,9 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        url: s3Url,
-        key: key,
+        s3_url: s3Url,
+        s3_key: key,
+        enhanced_folder: enhancedResumeFolder,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

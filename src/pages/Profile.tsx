@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Upload, FileText, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import LocationAutocomplete, { loadGoogleMapsScript } from '@/components/LocationAutocomplete';
 
 interface SubscriptionType {
   id?: string;
@@ -16,6 +17,8 @@ interface SubscriptionType {
   resume_subscription: string | null;
   job_subscription: string | null;
   cover_letter_subscription: string | null;
+  stripe_price_id?: string | null;
+  stripe_product_id?: string | null;
 }
 
 interface Subscription {
@@ -34,8 +37,10 @@ interface Profile {
   location: string;
   salary_min: number;
   salary_max: number;
-  resume_url: string;
+  resume_folder: string;
   subscriptions?: Subscription | null;
+  next_billing_month?: string | null;
+  created_at?: string;
 }
 
 interface Application {
@@ -49,7 +54,7 @@ interface Application {
 }
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, subscriptionStatus, checkSubscription } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
@@ -58,6 +63,7 @@ const Profile = () => {
   const [uploading, setUploading] = useState(false);
   const [savingSubscription, setSavingSubscription] = useState(false);
   const [subscriptionTypes, setSubscriptionTypes] = useState<SubscriptionType[]>([]);
+  const [checkingOut, setCheckingOut] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -66,6 +72,12 @@ const Profile = () => {
       fetchSubscriptionTypes();
     }
   }, [user]);
+
+  useEffect(() => {
+    loadGoogleMapsScript().catch((error) => {
+      console.error('Failed to load Google Maps:', error);
+    });
+  }, []);
 
   const fetchProfile = async () => {
     try {
@@ -89,6 +101,8 @@ const Profile = () => {
             interest_level,
             resume_subscription,
             job_subscription,
+            stripe_price_id,
+            stripe_product_id,
             cover_letter_subscription
           )
         `)
@@ -114,7 +128,8 @@ const Profile = () => {
     try {
       const { data, error } = await supabase
         .from('subscription_type')
-        .select('*');
+        .select('*')
+        .order('job_subscription', { ascending: true });
 
       if (error) throw error;
       setSubscriptionTypes(data || []);
@@ -171,6 +186,8 @@ const Profile = () => {
 
     setUploading(true);
     try {
+      // Reset input value so the same file can be selected again
+      e.target.value = '';
       const formData = new FormData();
       formData.append('file', file);
 
@@ -186,7 +203,7 @@ const Profile = () => {
       if (error) throw error;
       if (!data.success) throw new Error(data.error || 'Upload failed');
 
-      setProfile({ ...profile!, resume_url: data.url });
+      setProfile({ ...profile!, resume_folder: data.s3_url });
       toast.success('Resume uploaded successfully to S3!');
       
       // Refresh profile to get updated data
@@ -237,6 +254,47 @@ const Profile = () => {
       toast.error(error.message || 'Failed to update subscription');
     } finally {
       setSavingSubscription(false);
+    }
+  };
+
+  const handleCheckout = async (priceId: string) => {
+    if (!user) return;
+    
+    setCheckingOut(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { priceId },
+      });
+      
+      if (error) throw error;
+      
+      if (data?.url) {
+        window.open(data.url, '_blank');
+        toast.success('Opening Stripe checkout...');
+      }
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      toast.error('Failed to start checkout process');
+    } finally {
+      setCheckingOut(false);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal');
+      
+      if (error) throw error;
+      
+      if (data?.url) {
+        window.open(data.url, '_blank');
+        toast.success('Opening subscription management portal...');
+      }
+    } catch (error) {
+      console.error('Error opening customer portal:', error);
+      toast.error('Failed to open subscription management');
     }
   };
 
@@ -313,14 +371,25 @@ const Profile = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
+                  <LocationAutocomplete
                     value={profile?.location || ''}
-                    onChange={(e) =>
-                      setProfile({ ...profile!, location: e.target.value })
+                    onChange={(value) =>
+                      setProfile({ ...profile!, location: value })
                     }
                   />
                 </div>
+                {profile?.next_billing_month && (
+                  <div className="space-y-2">
+                    <Label>Next Billing Date</Label>
+                    <div className="text-sm text-muted-foreground">
+                      {new Date(profile.next_billing_month).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
+                    </div>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="salaryMin">Min Salary ($)</Label>
@@ -363,83 +432,132 @@ const Profile = () => {
               <CardTitle>Subscription Plan</CardTitle>
             </CardHeader>
             <CardContent>
-              {profile?.subscriptions?.subscription_type ? (
-                <form onSubmit={handleSaveSubscription} className="space-y-6">
-                  {profile.subscriptions.is_trial && (
-                    <div className="rounded-lg bg-primary/10 p-4">
-                      <p className="text-sm font-medium">
-                        🎉 You're on a free trial! Trial ends:{' '}
-                        {new Date(profile.subscriptions.trial_ends_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  )}
-                  
-                  <div className="grid gap-4">
-                    <div className="space-y-2">
-                      <Label>Subscription Plan</Label>
-                      <Select
-                        value={profile.subscriptions.subscription_type.job_subscription || ''}
-                        onValueChange={(value) => {
-                          const selectedType = subscriptionTypes.find(t => t.job_subscription === value);
-                          if (selectedType) {
-                            setProfile({
-                              ...profile,
-                              subscriptions: {
-                                ...profile.subscriptions!,
-                                subscription_type: selectedType,
-                              },
-                            });
-                          }
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0.00">
-                            <div className="flex flex-col">
-                              <span className="font-medium">Free Trial</span>
-                              <span className="text-xs text-muted-foreground">Match: All jobs | Resume: Free | Cover Letter: Free</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="4.99">
-                            <div className="flex flex-col">
-                              <span className="font-medium">Free - $4.99/mo</span>
-                              <span className="text-xs text-muted-foreground">Match: All jobs | Resume: Free | Cover Letter: Free</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="9.99">
-                            <div className="flex flex-col">
-                              <span className="font-medium">Basic - $9.99/mo</span>
-                              <span className="text-xs text-muted-foreground">Match: 70%+ | Resume: $2.99 | Cover Letter: $0.99</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="19.99">
-                            <div className="flex flex-col">
-                              <span className="font-medium">Plus - $19.99/mo</span>
-                              <span className="text-xs text-muted-foreground">Match: 75%+ | Resume: $3.99 | Cover Letter: $1.99</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="29.99">
-                            <div className="flex flex-col">
-                              <span className="font-medium">Premium - $29.99/mo</span>
-                              <span className="text-xs text-muted-foreground">Match: 85%+ | Resume: $5.99 | Cover Letter: $2.99</span>
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <Button type="submit" disabled={savingSubscription}>
-                    {savingSubscription ? 'Saving...' : 'Update Subscription'}
-                  </Button>
-                </form>
-              ) : (
-                <p className="py-4 text-center text-muted-foreground">
-                  No subscription plan found
-                </p>
+              {profile?.subscriptions?.is_trial && (
+                <div className="rounded-lg bg-primary/10 p-4 mb-6">
+                  <p className="text-sm font-medium">
+                    🎉 You're on a free trial! Trial ends:{' '}
+                    {new Date(profile.subscriptions.trial_ends_at).toLocaleDateString()}
+                  </p>
+                </div>
               )}
+
+              {subscriptionStatus?.subscribed && (() => {
+                const currentPlan = subscriptionTypes.find(
+                  t => t.stripe_product_id === subscriptionStatus.product_id
+                );
+                const totalPrice = currentPlan ? 
+                  parseFloat(currentPlan.job_subscription || '0') + 
+                  parseFloat(currentPlan.cover_letter_subscription || '0') + 
+                  parseFloat(currentPlan.resume_subscription || '0') : 0;
+
+                return (
+                  <div className="rounded-lg border-2 border-primary bg-primary/5 p-6 mb-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-primary" />
+                        <p className="font-semibold text-lg text-primary">Current Subscription</p>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={handleManageSubscription}>
+                        Manage
+                      </Button>
+                    </div>
+                    
+                    {currentPlan && (
+                      <div className="space-y-3">
+                        <div>
+                          <p className="font-medium text-xl capitalize">
+                            {currentPlan.interest_level?.replace(/_/g, ' ')} Plan
+                          </p>
+                          <p className="text-2xl font-bold text-primary mt-1">
+                            ${totalPrice.toFixed(2)}<span className="text-base font-normal text-muted-foreground">/month</span>
+                          </p>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-2 pt-3 border-t">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Job Search</p>
+                            <p className="font-medium">${currentPlan.job_subscription}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Resume Tools</p>
+                            <p className="font-medium">${currentPlan.resume_subscription}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Cover Letters</p>
+                            <p className="font-medium">${currentPlan.cover_letter_subscription}</p>
+                          </div>
+                        </div>
+                        
+                        {subscriptionStatus.subscription_end && (
+                          <p className="text-sm text-muted-foreground pt-2 border-t">
+                            Renews on: {new Date(subscriptionStatus.subscription_end).toLocaleDateString('en-US', {
+                              month: 'long',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Subscription Plan</Label>
+                    {profile?.created_at && (
+                      <span className="text-sm text-muted-foreground">
+                        Next payment: {(() => {
+                          const createdDate = new Date(profile.created_at);
+                          const now = new Date();
+                          const fourthDayAfterSignup = new Date(createdDate);
+                          fourthDayAfterSignup.setDate(createdDate.getDate() + 4);
+                          
+                          if (now < fourthDayAfterSignup) {
+                            return fourthDayAfterSignup.toLocaleDateString();
+                          }
+                          
+                          const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+                          return nextMonth.toLocaleDateString();
+                        })()}
+                      </span>
+                    )}
+                  </div>
+                  <Select
+                    value={subscriptionStatus?.product_id || profile?.subscriptions?.subscription_type?.stripe_product_id || ''}
+                    onValueChange={(productId) => {
+                      const selectedType = subscriptionTypes.find(t => t.stripe_product_id === productId);
+                      if (selectedType?.stripe_price_id) {
+                        handleCheckout(selectedType.stripe_price_id);
+                      }
+                    }}
+                    disabled={checkingOut}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a subscription plan" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      {subscriptionTypes.map((type) => {
+                        const totalPrice = parseFloat(type.job_subscription || '0') + 
+                                         parseFloat(type.cover_letter_subscription || '0') + 
+                                         parseFloat(type.resume_subscription || '0');
+                        const displayText = `${type.interest_level?.replace(/_/g, ' ')} - $${totalPrice.toFixed(2)}/mo`;
+                        
+                        return (
+                          <SelectItem key={type.id} value={type.stripe_product_id || ''} className="capitalize">
+                            {displayText}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    {checkingOut ? 'Opening Stripe checkout...' : 'Select a plan to subscribe via Stripe'}
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -448,14 +566,14 @@ const Profile = () => {
               <CardTitle>Resume</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {profile?.resume_url ? (
+              {profile?.resume_folder ? (
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="flex items-center gap-3">
                     <FileText className="h-8 w-8 text-primary" />
                     <div>
                       <p className="font-medium">Resume uploaded</p>
                       <a
-                        href={profile.resume_url}
+                        href={profile.resume_folder}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm text-primary hover:underline"
@@ -464,11 +582,14 @@ const Profile = () => {
                       </a>
                     </div>
                   </div>
-                  <Label htmlFor="resume" className="cursor-pointer">
-                    <Button type="button" variant="outline" disabled={uploading}>
-                      {uploading ? 'Uploading...' : 'Replace'}
-                    </Button>
-                  </Label>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    disabled={uploading}
+                    onClick={() => document.getElementById('resume')?.click()}
+                  >
+                    {uploading ? 'Uploading...' : 'Replace'}
+                  </Button>
                 </div>
               ) : (
                 <Label

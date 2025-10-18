@@ -37,6 +37,7 @@ interface Profile {
   salary_max: number;
   resume_folder: string;
   subscriptions?: Subscription | null;
+  next_billing_month?: string | null;
 }
 
 interface Application {
@@ -329,6 +330,18 @@ const Profile = () => {
                     }
                   />
                 </div>
+                {profile?.next_billing_month && (
+                  <div className="space-y-2">
+                    <Label>Next Billing Date</Label>
+                    <div className="text-sm text-muted-foreground">
+                      {new Date(profile.next_billing_month).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
+                    </div>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="salaryMin">Min Salary ($)</Label>

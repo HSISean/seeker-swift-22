@@ -14,6 +14,8 @@ import { Briefcase, MapPin, DollarSign, Search, ArrowLeft, CalendarIcon } from '
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { ExpirationBanner } from '@/components/ExpirationBanner';
+import { JobUpdateBanner } from '@/components/JobUpdateBanner';
 
 interface Job {
   id: string;
@@ -166,6 +168,8 @@ const Jobs = () => {
       </header>
 
       <main className="container mx-auto px-4 py-12">
+        <ExpirationBanner />
+        <JobUpdateBanner />
         <div className="mb-8">
           <h1 className="mb-4 text-4xl font-bold">Find Your Next Job</h1>
           <div className="flex gap-4">

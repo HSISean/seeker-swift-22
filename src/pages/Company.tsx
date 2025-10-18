@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, MapPin, DollarSign, Globe, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ExpirationBanner } from '@/components/ExpirationBanner';
+import { JobUpdateBanner } from '@/components/JobUpdateBanner';
 
 interface Company {
   id: string;
@@ -110,6 +112,8 @@ const Company = () => {
 
       <main className="container mx-auto px-4 py-12">
         <div className="mx-auto max-w-4xl space-y-8">
+          <ExpirationBanner />
+          <JobUpdateBanner />
           <Card>
             <CardHeader>
               <div className="flex items-start gap-6">

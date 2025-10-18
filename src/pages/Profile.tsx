@@ -171,6 +171,8 @@ const Profile = () => {
 
     setUploading(true);
     try {
+      // Reset input value so the same file can be selected again
+      e.target.value = '';
       const formData = new FormData();
       formData.append('file', file);
 
@@ -464,11 +466,14 @@ const Profile = () => {
                       </a>
                     </div>
                   </div>
-                  <Label htmlFor="resume" className="cursor-pointer">
-                    <Button type="button" variant="outline" disabled={uploading}>
-                      {uploading ? 'Uploading...' : 'Replace'}
-                    </Button>
-                  </Label>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    disabled={uploading}
+                    onClick={() => document.getElementById('resume')?.click()}
+                  >
+                    {uploading ? 'Uploading...' : 'Replace'}
+                  </Button>
                 </div>
               ) : (
                 <Label

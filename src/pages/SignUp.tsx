@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Briefcase } from 'lucide-react';
-import LocationAutocomplete, { loadGoogleMapsScript } from '@/components/LocationAutocomplete';
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
@@ -21,23 +20,24 @@ const SignUp = () => {
   });
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [mapsLoaded, setMapsLoaded] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadGoogleMapsScript()
-      .then(() => setMapsLoaded(true))
-      .catch((error) => {
-        console.error('Failed to load Google Maps:', error);
-        toast.error('Location autocomplete unavailable');
-      });
-  }, []);
+  const validateLocation = (location: string): boolean => {
+    // Format: "City, State" or "City, ST"
+    const locationRegex = /^[a-zA-Z\s]+,\s*[a-zA-Z\s]{2,}$/;
+    return locationRegex.test(location.trim());
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!resumeFile) {
       toast.error('Please upload your resume');
+      return;
+    }
+
+    if (!validateLocation(formData.location)) {
+      toast.error('Please enter location in format: City, State (e.g., New York, NY)');
       return;
     }
     
@@ -155,22 +155,16 @@ const SignUp = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="location">Location</Label>
-              {mapsLoaded ? (
-                <LocationAutocomplete
-                  value={formData.location}
-                  onChange={(value) => setFormData({ ...formData, location: value })}
-                  required
-                />
-              ) : (
-                <Input
-                  id="location"
-                  placeholder="Loading location search..."
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  required
-                  disabled
-                />
-              )}
+              <Input
+                id="location"
+                placeholder="e.g., New York, NY"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Format: City, State (e.g., San Francisco, CA)
+              </p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
